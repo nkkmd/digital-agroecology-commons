@@ -1,8 +1,11 @@
 # 構築ガイド：アグロエコロジー・コモンズ専用リレーの立ち上げ方
+**バージョン：2.0**　｜　前バージョン (v1.0) からの主な追加：§6「JSONLアーカイブとGit管理」
 
 本ドキュメントは、「デジタル・アグロエコロジー・コモンズ」の基盤となる専用Nostrリレーサーバーを構築するための公式ガイドです。
 
 このリレーは、スパムや無関係なSNS投稿を一切遮断し、**アグロエコロジーの「問い（Kind: 11042）」のみを永続的に保存する「知識の図書館」** として機能します。あなたがこのリレーを立ち上げることで、特定の企業に依存しない強靭な分散ネットワーク（入れ子構造のコモンズ）が実現されます。
+
+---
 
 ## 1. 事前準備（システム要件）
 
@@ -15,6 +18,8 @@
     *   例: `relay.your-domain.com`（取得したドメインのAレコードを、VPSのIPアドレスに向けておいてください）
 *   **必須ソフトウェア:**
     *   Git, Docker, Docker Compose v2 がインストールされていること。
+*   **§6 のJSONLアーカイブ機能を使う場合の追加要件:**
+    *   `nak`（Nostr CLIツール）および `git` がサーバーにインストールされていること。
 
 ---
 
@@ -220,3 +225,259 @@ docker compose up -d
 ### コミュニティへの参加表明
 リレーが正常に稼働したら、システムのフロントエンド（ダッシュボード）にある「リレー追加」設定から、あなたの `wss://relay.your-domain.com` をネットワークに追加してください。
 これで、世界中の農家とAIが、あなたのリレーをコモンズの一部として利用し始めます。
+
+---
+
+## 6. JSONLアーカイブとGit管理（知識の系譜を永続化する）
+
+> **なぜこれが必要か？**
+>
+> PostgreSQLのダンプはリレーを復元するためのものです。一方、**JSONLアーカイブ**はNostrイベントをプロトコル中立なテキスト形式で保存します。Nostrのイベントはすでに秘密鍵で署名された自己完結データのため、このJSONLファイルさえあれば、リレーソフトウェアが変わっても、VPSが廃止されても、いつでもどこでも完全復元できます。Gitで管理することで、「問いの系譜」が**改ざん不可能な履歴**として残ります。
+
+---
+
+### Step 6.1: `nak` のインストール
+
+`nak` はNostrイベントを操作するための軽量CLIツールです。
+
+```bash
+# Go製バイナリのダウンロード（最新版はGitHubリリースページを確認）
+curl -L https://github.com/fiatjaf/nak/releases/latest/download/nak-linux-amd64 -o /usr/local/bin/nak
+chmod +x /usr/local/bin/nak
+
+# 動作確認
+nak --version
+```
+
+---
+
+### Step 6.2: Gitアーカイブリポジトリの初期化
+
+アーカイブ専用のディレクトリとGitリポジトリを作成します。
+
+```bash
+# アーカイブ用ディレクトリの作成
+mkdir -p ~/nostr-archive/agroecology-commons
+cd ~/nostr-archive/agroecology-commons
+
+# Gitリポジトリの初期化
+git init
+git config user.name "Agroecology Commons Relay"
+git config user.email "admin@your-domain.com"
+
+# .gitignoreの設定（一時ファイルを除外）
+echo "*.tmp" > .gitignore
+echo ".DS_Store" >> .gitignore
+git add .gitignore
+git commit -m "init: アグロエコロジー・コモンズ アーカイブリポジトリを初期化"
+```
+
+---
+
+### Step 6.3: 手動エクスポート（初回・任意のタイミング）
+
+リレーに蓄積されたKind: 11042のイベントをJSONL形式でエクスポートします。
+
+```bash
+cd ~/nostr-archive/agroecology-commons
+
+# ── 全件エクスポート ──
+nak req -k 11042 wss://relay.your-domain.com > archive_$(date +%Y-%m-%d).jsonl
+
+# エクスポートされた件数を確認
+wc -l archive_$(date +%Y-%m-%d).jsonl
+```
+
+> **JSONL形式とは？** 1行＝1イベントのJSON。`{"id":"...","pubkey":"...","kind":11042,"content":"問いの内容",...}` という形式で、各行が独立したNostrイベントです。テキストエディタでも読め、あらゆるツールで処理できます。
+
+エクスポート後、Gitにコミットします。
+
+```bash
+git add archive_$(date +%Y-%m-%d).jsonl
+git commit -m "archive: $(date +%Y-%m-%d) 時点のスナップショット（$(wc -l < archive_$(date +%Y-%m-%d).jsonl)件）"
+```
+
+---
+
+### Step 6.4: 差分アーカイブスクリプト（cronで自動化）
+
+毎回全件エクスポートではなく、**前回以降の新規イベントだけを追記する差分方式**にすることで、ファイルサイズと処理時間を最小化します。
+
+以下のスクリプトを作成してください。
+
+```bash
+nano ~/nostr-archive/archive_diff.sh
+```
+
+```bash
+#!/bin/bash
+# =====================================================
+# アグロエコロジー・コモンズ JSONL差分アーカイバ
+# 前回コミット以降の新規イベントのみを取得し、Gitにコミットする
+# =====================================================
+
+RELAY="wss://relay.your-domain.com"       # ← あなたのリレーURLに変更
+ARCHIVE_DIR="$HOME/nostr-archive/agroecology-commons"
+ARCHIVE_FILE="$ARCHIVE_DIR/questions.jsonl"
+LOG_FILE="$ARCHIVE_DIR/archive.log"
+DATE=$(date +%Y-%m-%d)
+TIMESTAMP=$(date +%Y-%m-%dT%H:%M:%S)
+
+cd "$ARCHIVE_DIR" || exit 1
+
+# 最後にエクスポートしたイベントのタイムスタンプを取得
+# (ファイルが存在しない場合は0＝全件取得)
+if [ -f "$ARCHIVE_FILE" ]; then
+    # JSONLの最終行からcreated_atを取得
+    LAST_TS=$(tail -1 "$ARCHIVE_FILE" | python3 -c "import sys,json; print(json.load(sys.stdin).get('created_at',0))" 2>/dev/null || echo 0)
+else
+    LAST_TS=0
+fi
+
+echo "[$TIMESTAMP] 前回タイムスタンプ: $LAST_TS" >> "$LOG_FILE"
+
+# 前回以降の新規イベントを取得（since パラメータで差分取得）
+TMP_FILE=$(mktemp)
+nak req -k 11042 --since "$LAST_TS" "$RELAY" > "$TMP_FILE" 2>> "$LOG_FILE"
+
+NEW_COUNT=$(wc -l < "$TMP_FILE")
+
+if [ "$NEW_COUNT" -eq 0 ]; then
+    echo "[$TIMESTAMP] 新規イベントなし。スキップ。" >> "$LOG_FILE"
+    rm "$TMP_FILE"
+    exit 0
+fi
+
+# 既存ファイルに追記（重複を避けるためIDで重複排除）
+cat "$TMP_FILE" >> "$ARCHIVE_FILE"
+
+# IDの重複排除（同じイベントが二重取得された場合の保険）
+python3 - <<'EOF'
+import json, sys
+
+seen = set()
+unique_lines = []
+with open("questions.jsonl", "r") as f:
+    for line in f:
+        line = line.strip()
+        if not line:
+            continue
+        try:
+            event = json.loads(line)
+            eid = event.get("id")
+            if eid and eid not in seen:
+                seen.add(eid)
+                unique_lines.append(line)
+        except json.JSONDecodeError:
+            pass  # 壊れた行はスキップ
+
+with open("questions.jsonl", "w") as f:
+    f.write("\n".join(unique_lines) + "\n")
+
+print(f"重複排除後の総イベント数: {len(unique_lines)}")
+EOF
+
+rm "$TMP_FILE"
+
+# Gitにコミット
+TOTAL=$(wc -l < "$ARCHIVE_FILE")
+git add questions.jsonl
+git commit -m "archive: $DATE +${NEW_COUNT}件追加（累計 ${TOTAL}件）" >> "$LOG_FILE" 2>&1
+
+echo "[$TIMESTAMP] 完了: ${NEW_COUNT}件追加、累計 ${TOTAL}件" >> "$LOG_FILE"
+```
+
+```bash
+# 実行権限を付与
+chmod +x ~/nostr-archive/archive_diff.sh
+
+# 動作テスト（手動実行）
+~/nostr-archive/archive_diff.sh
+```
+
+---
+
+### Step 6.5: cronで自動化（毎日深夜3時）
+
+```bash
+crontab -e
+```
+
+以下の行を追加します。
+
+```cron
+# アグロエコロジー・コモンズ JSONL差分アーカイブ（毎日03:00）
+0 3 * * * /bin/bash $HOME/nostr-archive/archive_diff.sh
+```
+
+---
+
+### Step 6.6: リモートリポジトリへのpush（任意・強く推奨）
+
+Gitリポジトリをリモート（GitHub / Gitea / Forgejo など）にも push することで、VPS障害時の最終防衛ラインになります。
+
+```bash
+# GitHubの場合（プライベートリポジトリ推奨）
+cd ~/nostr-archive/agroecology-commons
+git remote add origin git@github.com:your-username/agroecology-commons-archive.git
+git push -u origin main
+
+# 以後、archive_diff.sh の末尾に以下を追加すれば自動pushも可能
+# git push origin main >> "$LOG_FILE" 2>&1
+```
+
+> **プライバシーに関する注意：** Nostrのイベントはもともとパブリックなプロトコルのため、公開リポジトリにしても問題ありませんが、投稿者のpubkeyが含まれます。コミュニティの合意に基づいてプライベート/パブリックを選択してください。
+
+---
+
+### Step 6.7: アーカイブからの復元
+
+リレーを新しいサーバーに移行した際や、データが失われた際は、JSONLファイルから直接再インポートできます。
+`nak` の一括送信機能（ストリーミング）を利用するため、数万件のデータでも数秒〜数十秒で瞬時に復元可能です。
+
+```bash
+# アーカイブから新リレーへ全件インポート（一括処理）
+cat ~/nostr-archive/agroecology-commons/questions.jsonl | nak event wss://new-relay.your-domain.com
+
+echo "✅ インポート完了"
+```
+
+---
+
+### アーカイブディレクトリの構成（完成イメージ）
+
+```text
+~/nostr-archive/agroecology-commons/
+├── .git/                    # Gitリポジトリ（問いの系譜の歴史）
+├── .gitignore
+├── questions.jsonl          # 全イベントの蓄積（1行＝1問い）
+├── archive.log              # 実行ログ
+└── archive_diff.sh          # 差分アーカイブスクリプト
+```
+
+`git log` を実行すると、コミットメッセージが「問いの系譜」の年表になります。
+
+```text
+commit a3f9c2d  archive: 2026-06-01 +12件追加（累計 340件）
+commit 7b1e804  archive: 2026-05-31 +8件追加（累計 328件）
+commit 2c4a1f0  archive: 2026-05-30 +5件追加（累計 320件）
+...
+```
+
+---
+
+### 保存担保のレイヤー構成（まとめ）
+
+| レイヤー | 手段 | リレー依存 | 可搬性 |
+|---|---|---|---|
+| L1 運用DB | PostgreSQL（Nostream標準） | ◎ 高 | △ 実装依存 |
+| L2 DBダンプ | pg_dumpall → 外部ストレージ | ◎ 高 | △ 実装依存 |
+| **L3 JSONLアーカイブ** | **nak + Gitで差分管理** | **✕ 不要** | **◎ 完全** |
+| L4 リモートpush | GitHub / Gitea | ✕ 不要 | ◎ 完全 |
+
+> **Nostrの本質的な強み：** イベントは署名済み自己完結データです。JSONLファイルさえ手元にあれば、リレーソフトウェアが廃止されても、VPSが消えても、「問いの系譜」はコモンズの手に残り続けます。
+
+---
+
+*このガイドはデジタル・アグロエコロジー・コモンズ推進プロジェクトの一環として作成されました。*
+*v2.0 — 2026年4月改訂*
