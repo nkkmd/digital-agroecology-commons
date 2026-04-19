@@ -1,5 +1,7 @@
 # デジタル・アグロエコロジー・コモンズ：システムアーキテクチャ詳細設計書 v2.0
 
+*[English follows below]*
+
 **バージョン：2.0**　｜　前バージョン (v1.0) からの主なアップデート：
 * コモンズ・リレー層における「JSONL + Gitを用いたプロトコルレベルのデータ永続化機構（知識の系譜のアーカイブ）」の追加
 * ガバナンス要件への「改ざん不可能な歴史の保存」の追記
@@ -165,4 +167,173 @@
     Kind:11042のタグ仕様変更等が発生した場合は、Nostrネットワーク上でNIP（Nostr Implementation Possibility）のような形でコミュニティベースでの提案・合意形成を行います。
 
 ---
-*Created for the "Digital Agroecology Commons" Project. Based on the theory of "テクノロジーを手放す農業論".*
+
+# Digital Agroecology Commons: System Architecture Detailed Design v2.0 (English)
+
+**Version: 2.0** | Main updates from the previous version (v1.0):
+* Added "Protocol-level data persistence mechanism using JSONL + Git (Archiving the lineage of knowledge)" in the Commons Relay Layer.
+* Appended "Preservation of tamper-proof history" to governance requirements.
+
+## 1. System Overview
+
+This system is a decentralized platform implementing the "Circulation of Inquiry" based on the theory of "Agriculture that Lets Go of Technology." Built on the Nostr protocol, it features no centralized database and consists of edge devices, decentralized relays hosted by volunteers, and a permanent archive using Git.
+
+### 1.1 Data Flow and Component Integration
+
+```text
+[ Local Farmland (Local Context) ]
+  ① IoT Sensors / Observation Records
+      │ (Raw data - Private)
+      ▼
+  ② Local AI Engine (Inside Edge Device)
+      ├─ Converts raw data into "Inquiries (Problematizing)"
+      ├─ Cryptographic signing with secret key (nsec)
+      └─ Generates JSON (Nostr Event Kind:11042)
+      │
+      ▼ (WebSocket WSS / Multi-publish)
+===================================================================
+[ Commons Relay Layer (P2P Network) ]
+  ③ Anchor Relay (wss://relay.cultivationdata.net)
+  ③ Community Relay (wss://relay.local-agri.org) ...etc
+      │ 
+      ├─ (Allows only Kind:11042 and saves to PostgreSQL)
+      └─ [NEW] JSONL + Git Archive (Permanent storage of tamper-proof history)
+===================================================================
+      │ (WebSocket WSS / Subscribe)
+      ▼
+[ Commons API / Indexer Layer ]
+  ④ API Server (Node.js/Go)
+      ├─ Continuously fetches events from relays & caches to RDB
+      └─ Recursively parses `e` tags to build "Evolutionary Trees"
+      │
+      ▼ (HTTP REST API)
+[ User Interface (Web/App) ]
+  ⑤ Farmer's Dashboard
+      ├─ Visualizes the network of inquiries (Mind map)
+      └─ Provides new insights through context matching
+```
+
+---
+
+## 2. Detailed Module Design
+
+### 2.1 Commons Relay Layer (Backend / Decentralized Infrastructure)
+
+A relay network designed to build a permanent knowledge database independent of specific companies.
+
+*   **Base Software:** `Nostream` (TypeScript) or `Khatru` (Go)
+*   **Infrastructure Requirements:** Minimum 1vCPU / 1GB RAM / 20GB SSD (can run on cheap VPS or Raspberry Pi 4).
+*   **Custom Filtering Specs (Application-specific Relay):**
+    Unlike standard Nostr relays, strict admission policies are enforced at the relay level:
+    1. Must be `kind === 11042`.
+    2. Must contain the `["t", "agroecology"]` tag.
+    3. Payload size must be less than 5KB (rejecting images or massive data embeddings).
+*   **Permanent Archiving of Knowledge Lineage (JSONL + Git):**
+    To prepare for PostgreSQL failures or VPS termination, we implement an archiving mechanism utilizing the nature of Nostr events as "self-contained, cryptographically signed data." By periodically exporting differential events in `JSONL` format via the `nak` tool and committing them to a Git repository, we ensure complete protocol-level portability and recoverability independent of infrastructure.
+*   **Distribution Format:**
+    A pre-configured `docker-compose.yml` and automated archiving scripts will be released as OSS on GitHub, allowing anyone (e.g., regional ag-coops) to launch their own community relay.
+
+### 2.2 Local AI Edge Layer (Sender / Source)
+
+A private module holding raw data (context), generating and signing inquiries as "Boundary Objects."
+
+*   **Software Requirements:** Node.js, Python, etc.
+*   **Key Management:**
+    Each farmer's Nostr secret key (`nsec` / `hex`) is stored in a secure local area (environment variables or encrypted storage). **Keys are never transmitted to the cloud.**
+*   **Problematizing Pipeline:**
+    1. **Input:** Array data from soil moisture sensors over the past week + farmer's text memos.
+    2. **LLM Processing:** A dedicated prompt ("Output relational inquiries in JSON without providing prescriptions") is passed to a local small LLM (e.g., Llama-3) or commercial API (e.g., Claude 3.5 Sonnet).
+    3. **Event Construction:** Constructs and signs a Kind 11042 event using libraries like `nostr-tools`.
+*   **Multi-publish Logic:**
+    For fail-safe redundancy, the `EVENT` message is simultaneously broadcast to three or more configured relays (anchor relay, community relay, public relay).
+
+### 2.3 Commons API & Indexer Layer (Receiver / API & DB)
+
+An intermediate server that collects data from decentralized relays and reconstructs it into "Lineages (Trees)" for easy frontend consumption.
+
+*   **Tech Stack:** Node.js (Express) or Go, PostgreSQL (or SQLite)
+*   **Indexer DB Schema (Conceptual):**
+    *   `events`: id, pubkey, content, created_at
+    *   `tags`: id, event_id, key (e.g., context, relationship), value1, value2
+    *   `lineages`: parent_event_id, child_event_id, relation_type (derived_from, synthesis)
+*   **REST API Endpoint Design:**
+    *   `GET /api/v1/inquiries`: Fetch the latest inquiries (with pagination).
+    *   `GET /api/v1/inquiries/search`: Filter search based on `context` tags (soil, climate, etc.).
+    *   `GET /api/v1/inquiries/tree/:id`: Takes a specified event ID as the root, recursively joins the `lineages` table, and returns an N-level deep tree structure of child nodes (derived/synthesized inquiries) as JSON (for graph rendering).
+
+### 2.4 Frontend Viewer Layer (UI/UX)
+
+*   **Tech Stack:** React, Vue.js, etc. / `React Flow` or `D3.js` (for network drawing)
+*   **Core UI:**
+    In addition to a "Timeline view," it provides a "Tree-map view (Node & Edge)" that shows how specific inquiries have undergone translational co-evolution. By clicking on a node (inquiry), farmers can compare and reference "contexts" and "inquiries" from other regions.
+
+---
+
+## 3. Core Protocol Specification: Nostr Event (Kind: 11042)
+
+The data payload specification for the "Form of Inquiry (Boundary Object)," which is the lifeline of this system.
+
+### 3.1 JSON Payload Schema
+
+```json
+{
+  "kind": 11042,
+  "pubkey": "<32-bytes hex string>",
+  "created_at": <Unix timestamp>,
+  "content": "<string: Inquiry text articulated by AI or farmer>",
+  "tags": [
+    // [Required] For commons routing
+    ["t", "agroecology"],
+
+    // [Required / Multiple allowed] Context: Abstracted metadata of locality
+    // Format: ["context", "<category>", "<value>"]
+    ["context", "climate_zone", "warm-temperate"],
+    ["context", "soil_type", "volcanic_ash"],
+
+    // [Required / Multiple allowed] Relationship: Observation category
+    // Format: ["relationship", "<element1>", "<element2>"]
+    ["relationship", "microclimate", "weed_flora"],
+
+    // [Required] Phase: Mastery level for scaffolding targeting
+    // Values: "beginner" | "intermediate" | "expert"
+    ["phase", "intermediate"],
+
+    // [Optional] Trigger: Origin of this inquiry (e.g., sensor anomaly)
+    ["trigger", "sensor_anomaly", "soil_moisture"],
+
+    // [Optional / Multiple allowed] Lineage: Chain of translation
+    // Format: ["e", "<parent_event_id>", "<relay_url>", "<relation_type>"]
+    // relation_type: "derived_from" | "synthesis"
+    ["e", "parent_id_hex...", "wss://relay.cultivationdata.net", "derived_from"]
+  ],
+  "id": "<32-bytes hex string: sha256(serialize(event))>",
+  "sig": "<64-bytes hex string: schnorr_signature(id, privkey)>"
+}
+```
+
+### 3.2 Recommended Vocabulary for Context / Relationship
+
+To overcome the dilemma of locality while generating searchable "weak ties," tag values are standardized by the frontend/AI using a recommended vocabulary rather than completely free text.
+
+*   **Context (climate_zone):** `subarctic`, `cool-temperate`, `warm-temperate`, `subtropical`
+*   **Context (soil_type):** `volcanic_ash` (Andisol), `alluvial`, `peat`, `sandy`
+*   **Relationship (Elements):** `soil_moisture`, `weed_flora`, `pest`, `natural_enemy`, `microclimate`, `nutrient`
+
+---
+
+## 4. Commons Governance and Social Implementation
+
+Operational policies to maintain Ostrom's "Design principles for Common Pool Resources".
+
+1.  **Portability of Identity (Public Key):**
+    Farmers do not register users (no email/password creation) on the system. The locally generated secret/public key pair serves as the ID. Even if the API layer or dashboard stops operating, they can regain access to their "lineage of inquiries" by entering their public key into another aggregator app.
+2.  **Preservation of History (Tamper-proof Guarantee):**
+    Thanks to the JSONL + Git archiving mechanism, not even relay operators can secretly alter or delete the "lineage of inquiries." The Git commit log serves directly as the "chronicle of agroecology," technically guaranteeing the transparency and reliability of the entire commons.
+3.  **Spam Defense and Web of Trust (Utilizing NIP-32/NIP-51):**
+    Since it's an open network, there's a risk of spam. To prevent this, we will introduce an algorithm that utilizes Nostr's "Mute lists" and "Follow lists" to prioritize (weight) inquiries on the UI only from public keys approved by the "actual farmer network (Web of Trust)."
+4.  **Protocol Updates:**
+    If changes to tag specifications for Kind:11042 occur, proposals and consensus-building will be conducted community-based on the Nostr network, similar to NIPs (Nostr Implementation Possibilities).
+
+---
+*Created for the "Digital Agroecology Commons" Project. Based on the theory of "Agriculture that Lets Go of Technology".*
+```
