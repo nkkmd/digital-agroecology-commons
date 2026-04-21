@@ -1,6 +1,59 @@
-# Toitoi ライセンス・ポリシー (License Policy)
+# Toitoi License Policy
 
-*[English follows below]*
+*[日本語は下に続きます]*
+
+The Toitoi project is an open-source initiative aimed at realizing a "Digital Agroecology Commons" based on the philosophy of "[Letting Go of Technology in Agriculture](./Letting-Go-of-Technology-in-Agriculture.md)".
+The primary goal of this project is to **"prevent the tacit knowledge (the lineage of inquiries) among farmers from being enclosed by platform capitalism, and to perpetuate it as a shared asset (commons) of humanity."**
+
+To legally guarantee this philosophy while encouraging the participation of diverse developers and enterprises in the ecosystem, Toitoi adopts a **"Multi-License Approach,"** combining different licenses depending on the role of each component (module).
+
+---
+
+## 1. Overall License Structure
+
+| Component | Applied License | Purpose |
+| :--- | :--- | :--- |
+| **1. Commons Relay & Indexer API**<br>(Backend Infrastructure) | **GNU AGPLv3** | Defend the commons by preventing infrastructure enclosure (closed SaaSification). |
+| **2. Frontend & Edge AI Tools**<br>(Client Applications) | **MIT License** | Maximize ecosystem diversity (UIs and devices) by lowering barriers for companies and individuals. |
+| **3. Data Schema & Documentation**<br>(Inquiry Formats, Architecture Docs) | **CC BY-SA 4.0** | Prevent distortion of philosophy and ensure derived standards are contributed back to the commons. |
+
+---
+
+## 2. Reasons and Details for Each License
+
+### 1. Commons Relay Layer / Indexer API Layer
+**👉 GNU Affero General Public License v3.0 (AGPLv3)**
+
+The source code for the relay servers and APIs, which form the foundation of the network, is licensed under the AGPLv3.
+*   **Why AGPL?** To prevent large agritech companies from copying or modifying the Toitoi server code and offering it as a "closed, paid cloud service (SaaS)," thereby enclosing the data.
+*   **Core Rule:** Under AGPLv3, even if the software is provided as a service over a network, **if the code has been modified, the complete source code must be made publicly available as open source**. This ensures that any technological advancements gained using the commons are always returned to the commons.
+
+### 2. Client Application Layer / Local Edge Layer
+**👉 MIT License**
+
+Client scripts that send data from the local AI to the Nostr network, smartphone apps, and dashboard UIs running on the farmer's end are licensed under the permissive MIT License.
+*   **Why MIT?** Because the "entry points (apps)" that utilize the data from the commons (relays) should be as diverse as possible.
+*   **Core Rule:** Startups and sensor manufacturers can freely incorporate Toitoi's client code into their commercial apps or proprietary IoT devices and sell them (with no obligation to disclose their source code). By "protecting the infrastructure with AGPL and letting apps compete freely with MIT," we can explosively increase participation in the commons.
+
+### 3. Data Schema Definition / Philosophical Documentation
+**👉 Creative Commons Attribution-ShareAlike 4.0 International (CC BY-SA 4.0)**
+
+This applies to the JSON schema definitions of the "Boundary Object (Form of Inquiry)"—the core of this project—and the architectural documentation based on our philosophy.
+*   **Core Rule:** Requires "attribution to the original author (Toitoi Project)" (BY) and demands that "if you remix, transform, or build upon the material, you must distribute your contributions under the same license" (ShareAlike - SA). This prevents the project's ideals from being distorted or absorbed into proprietary (closed) standards.
+
+---
+
+## 3. To Contributors (Developers & Researchers)
+
+Toitoi is not a platform controlled by specific administrators; it is a protocol (a set of rules).
+
+When you add new features, fix bugs, or launch your own local relay, you are participating in the "translational co-evolution" of agroecology itself. By submitting a Pull Request, you agree that your contributions will be licensed under the policies stated above.
+
+Let's grow the infrastructure that supports farmers' autonomy and co-evolution with ecosystems together.
+
+---
+
+# Toitoi ライセンス・ポリシー (License Policy)
 
 Toitoiプロジェクトは、『[テクノロジーを手放す農業論](./Tech-wo-Tebanasu-Nogyoron.md)』に基づく「デジタル・アグロエコロジー・コモンズ」を実現するためのオープンソース・プロジェクトです。
 
@@ -52,59 +105,6 @@ Toitoiは、特定の管理者が支配するプラットフォームではな�
 プルリクエスト（コードの提案）を送信する際は、上記のライセンス・ポリシーに同意いただいたものとみなします。
 
 農家の自律と、生態系との共進化を支えるインフラを、ともに育てていきましょう。
-
----
-
-# Toitoi License Policy (English)
-
-The Toitoi project is an open-source initiative aimed at realizing a "Digital Agroecology Commons" based on the philosophy of "[Letting Go of Technology in Agriculture](./Letting-Go-of-Technology-in-Agriculture.md)".
-The primary goal of this project is to **"prevent the tacit knowledge (the lineage of inquiries) among farmers from being enclosed by platform capitalism, and to perpetuate it as a shared asset (commons) of humanity."**
-
-To legally guarantee this philosophy while encouraging the participation of diverse developers and enterprises in the ecosystem, Toitoi adopts a **"Multi-License Approach,"** combining different licenses depending on the role of each component (module).
-
----
-
-## 1. Overall License Structure
-
-| Component | Applied License | Purpose |
-| :--- | :--- | :--- |
-| **1. Commons Relay & Indexer API**<br>(Backend Infrastructure) | **GNU AGPLv3** | Defend the commons by preventing infrastructure enclosure (closed SaaSification). |
-| **2. Frontend & Edge AI Tools**<br>(Client Applications) | **MIT License** | Maximize ecosystem diversity (UIs and devices) by lowering barriers for companies and individuals. |
-| **3. Data Schema & Documentation**<br>(Inquiry Formats, Architecture Docs) | **CC BY-SA 4.0** | Prevent distortion of philosophy and ensure derived standards are contributed back to the commons. |
-
----
-
-## 2. Reasons and Details for Each License
-
-### 1. Commons Relay Layer / Indexer API Layer
-**👉 GNU Affero General Public License v3.0 (AGPLv3)**
-
-The source code for the relay servers and APIs, which form the foundation of the network, is licensed under the AGPLv3.
-*   **Why AGPL?** To prevent large agritech companies from copying or modifying the Toitoi server code and offering it as a "closed, paid cloud service (SaaS)," thereby enclosing the data.
-*   **Core Rule:** Under AGPLv3, even if the software is provided as a service over a network, **if the code has been modified, the complete source code must be made publicly available as open source**. This ensures that any technological advancements gained using the commons are always returned to the commons.
-
-### 2. Client Application Layer / Local Edge Layer
-**👉 MIT License**
-
-Client scripts that send data from the local AI to the Nostr network, smartphone apps, and dashboard UIs running on the farmer's end are licensed under the permissive MIT License.
-*   **Why MIT?** Because the "entry points (apps)" that utilize the data from the commons (relays) should be as diverse as possible.
-*   **Core Rule:** Startups and sensor manufacturers can freely incorporate Toitoi's client code into their commercial apps or proprietary IoT devices and sell them (with no obligation to disclose their source code). By "protecting the infrastructure with AGPL and letting apps compete freely with MIT," we can explosively increase participation in the commons.
-
-### 3. Data Schema Definition / Philosophical Documentation
-**👉 Creative Commons Attribution-ShareAlike 4.0 International (CC BY-SA 4.0)**
-
-This applies to the JSON schema definitions of the "Boundary Object (Form of Inquiry)"—the core of this project—and the architectural documentation based on our philosophy.
-*   **Core Rule:** Requires "attribution to the original author (Toitoi Project)" (BY) and demands that "if you remix, transform, or build upon the material, you must distribute your contributions under the same license" (ShareAlike - SA). This prevents the project's ideals from being distorted or absorbed into proprietary (closed) standards.
-
----
-
-## 3. To Contributors (Developers & Researchers)
-
-Toitoi is not a platform controlled by specific administrators; it is a protocol (a set of rules).
-
-When you add new features, fix bugs, or launch your own local relay, you are participating in the "translational co-evolution" of agroecology itself. By submitting a Pull Request, you agree that your contributions will be licensed under the policies stated above.
-
-Let's grow the infrastructure that supports farmers' autonomy and co-evolution with ecosystems together.
 
 ---
 *If you have any questions regarding commercial use or custom licensing of the client applications, please open an issue.*
