@@ -1,5 +1,5 @@
 # 構築ガイド：アグロエコロジー・コモンズ専用リレーの立ち上げ方
-**バージョン：2.0**　｜　前バージョン (v1.0) からの主な追加：§6「JSONLアーカイブとGit管理」
+**バージョン：2.1**　｜　前バージョン (v2.0) からの主な追加：ネットワーク競合および初期エラー回避のための設定手順(Step 2.3)を追記
 
 本ドキュメントは、「デジタル・アグロエコロジー・コモンズ」の基盤となる専用Nostrリレーサーバーを構築するための公式ガイドです。
 
@@ -69,14 +69,35 @@ EVENT_CREATED_AT_LOWER_LIMIT=31536000 # (1年前まで)
 ```
 *※編集が終わったら `Ctrl + O` → `Enter` で保存し、`Ctrl + X` で閉じます。*
 
-### Step 2.3: データベースのセットアップと起動
-NostreamはPostgreSQLを使用します。Docker Composeを使って一発で起動します。
+### Step 2.3: docker-compose.yml と初期ファイルの調整（エラー回避）
+Nostreamのデフォルト設定のまま起動すると、VPSの環境によってはネットワーク競合や設定ファイル不在によるエラー（起動ループ）が発生します。これを未然に防ぐため、2つの調整を行います。
+
+**① 固定IPネットワーク設定の解除**
+デフォルトで指定されている固定IPを削除し、Dockerに自動割り当てさせます。
+```bash
+nano docker-compose.yml
+```
+ファイルを開き、以下の部分（複数箇所あります）を `#` でコメントアウトするか、行ごと削除してください。
+
+1. 各コンテナ（`nostream`, `nostream-db`, `nostream-cache`）の `ipv4_address: 10.10.10.x` の行
+2. ファイルの一番下にある `subnet: 10.10.10.0/24` およびその上の `ipam:` 関連の行
+*(※さらに安全性を高めるため、外部公開が不要な `nostream-db` の `5432:5432` と `nostream-cache` の `6379:6379` のポート指定もコメントアウトしておくことを推奨します)*
+
+**② 初期設定ファイルの空作成**
+起動時に必要な `settings.yaml` が無いとエラーになるため、空のファイルを作っておきます。
+```bash
+mkdir -p .nostr
+touch .nostr/settings.yaml
+```
+
+### Step 2.4: データベースのセットアップと起動
+NostreamはPostgreSQLを使用します。Docker Composeを使って一発で起動します。（※権限エラーを防ぐため `sudo` を付けて実行します）
 
 ```bash
 # Nostream本体とデータベース(PostgreSQL)のビルドと起動（バックグラウンド実行）
-docker compose up -d
+sudo docker compose up -d
 ```
-起動後、`docker compose logs -f` を実行し、エラーが出ずにリレーが `Listening on port 8008` と表示されていれば内部サーバーの起動は成功です。
+起動後、`sudo docker compose logs -f nostream` を実行し、エラーが出ずに一番最後に `Server listening on port 8008` または `nostream is running` と表示されていれば内部サーバーの起動は成功です。（監視から抜けるには `Ctrl + C`）
 
 ---
 
@@ -209,8 +230,9 @@ test();
 
 ```bash
 cd nostream
-docker exec -t nostream-db-1 pg_dumpall -c -U nostream > dump_`date +%Y-%m-%d`.sql
+sudo docker exec -t nostream-db-1 pg_dumpall -c -U nostr_ts_relay > dump_`date +%Y-%m-%d`.sql
 ```
+*(※ユーザー名等の環境によってエラーが出る場合は、適宜確認してください)*
 
 ### システムのアップデート
 Nostreamの最新のセキュリティパッチを適用する場合は以下を実行します。
@@ -218,8 +240,8 @@ Nostreamの最新のセキュリティパッチを適用する場合は以下を
 ```bash
 cd nostream
 git pull origin main
-docker compose build
-docker compose up -d
+sudo docker compose build
+sudo docker compose up -d
 ```
 
 ### コミュニティへの参加表明
@@ -480,4 +502,4 @@ commit 2c4a1f0  archive: 2026-05-30 +5件追加（累計 320件）
 ---
 
 *このガイドはデジタル・アグロエコロジー・コモンズ推進プロジェクトの一環として作成されました。*
-*v2.0 — 2026年4月改訂*
+*v2.1 — 2026年4月改訂*
