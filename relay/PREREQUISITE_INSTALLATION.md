@@ -146,11 +146,16 @@ sudo systemctl status docker
 ```bash
 # docker グループにユーザーを追加
 sudo usermod -aG docker $USER
+```
 
-# グループの変更を反映させるため、ログアウト・ログインするか以下を実行
-newgrp docker
+> **重要:** `newgrp docker` で即時反映することもできますが、このコマンドはサブシェルを起動するため、**その後の `sudo docker compose up -d` 実行時に環境変数 `$PWD` が正しく展開されないことがあります。**
+>
+> Nostream の構築（NOSTR_RELAY_SETUP.md）に進む前に、一度 **SSHセッションを切断して再接続**することを強く推奨します。これによりグループ変更が安全に反映されます。
 
-# または、ターミナルを再起動してください
+```bash
+# SSHを切断して再接続後、グループが反映されているか確認
+groups $USER
+# 出力例: ubuntu adm docker ...（docker が含まれていればOK）
 ```
 
 ### Step 6: Docker インストール確認
@@ -167,6 +172,8 @@ Docker version 24.0.0 (またはそれ以上)
 Hello from Docker!
 This message shows that your installation appears to be working correctly.
 ```
+
+> **確認後の注意:** `docker run hello-world` の実行後、**必ずSSHを切断して再接続してから** NOSTR_RELAY_SETUP.md の手順に進んでください。セッションを引き継いだまま進むと、`$PWD` の展開に関わるボリュームマウントが失敗することがあります。
 
 ---
 
@@ -249,9 +256,6 @@ nak v0.7.x (またはそれ以上)
 ```bash
 # ヘルプ表示
 nak --help
-
-# または
-nak help
 ```
 
 **期待される主なコマンド:**
@@ -367,16 +371,16 @@ docker compose version
 
 ### 問題 3: ユーザーが `docker` コマンドを実行できない（Permission denied）
 
-**原因:** 現在のユーザーが `docker` グループに属していない。
+**原因:** 現在のユーザーが `docker` グループに属していないか、SSHセッションを再接続していない。
 
 **解決法:**
 ```bash
 # docker グループにユーザーを追加
 sudo usermod -aG docker $USER
 
-# グループの変更を反映（オプション 1: ターミナル再起動）
-# または以下で即座に反映
-newgrp docker
+# SSHを切断して再接続後、グループを確認
+groups $USER
+# docker が含まれていればOK
 
 # 確認
 docker ps
@@ -426,7 +430,7 @@ sudo apt update
 
 ## 次のステップ
 
-すべての必須ソフトウェアのインストールが完了したら、[NOSTR_RELAY_SETUP.md](./NOSTR_RELAY_SETUP.md) の **Step 2.1** に進んでください。
+すべての必須ソフトウェアのインストールが完了したら、**SSHセッションを切断して再接続した後**、[NOSTR_RELAY_SETUP.md](./NOSTR_RELAY_SETUP.md) の **Step 2.1** に進んでください。
 
 ---
 
