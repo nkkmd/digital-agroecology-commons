@@ -142,7 +142,7 @@ info:
   contact: mailto:admin@your-domain.com
 ```
 
-**② `limits.event` セクション内の2箇所を編集：**
+**② `limits.event` セクション内の3箇所を編集：**
 
 `retention.kind.whitelist` を空にします（デフォルトで `62` が入っています）：
 
@@ -153,13 +153,25 @@ info:
         whitelist: []
 ```
 
-`kind.whitelist` に `11042` のみを設定します：
+`kind.whitelist` に `11042` のみを設定します。**インデントに注意してください。`kind:` は `pubkey:` と同じ階層です。`pubkey.whitelist` に誤って書き込まないよう確認してください：**
 
 ```yaml
     kind:
       whitelist:
         - 11042
       blacklist: []
+    pubkey:
+      minBalance: 0
+      minLeadingZeroBits: 0
+      whitelist: []    # ← ここは空のまま
+```
+
+`createdAt.maxNegativeDelta` を修正します（デフォルト `0` のままだと過去のイベントが一切受け付けられずタイムアウトになります）：
+
+```yaml
+    createdAt:
+      maxPositiveDelta: 900
+      maxNegativeDelta: 31536000    # 1年分の余裕を持たせる
 ```
 
 編集が終わったら `Ctrl + O` → `Enter` で保存し、`Ctrl + X` で閉じます。その後、設定を反映するためにnostreamを再起動します。
