@@ -1,5 +1,5 @@
 # 構築ガイド：アグロエコロジー・コモンズ専用リレーの立ち上げ方
-**バージョン：2.2**　｜　前バージョン (v2.1) からの主な追加：Nostream最新仕様への対応（`.env`から`.nostr/settings.yaml`への設定移行、シークレットキーの自動生成）
+**バージョン：2.3**　｜　前バージョン (v2.2) からの主な修正：`postgresql.conf` 事前生成手順の追加、設定ファイルを `settings.yaml` から `settings.json`（初回起動後に自動生成）に修正、パーミッション設定手順の追加、`SECRET` 重複防止の注記追加
 
 本ドキュメントは、「デジタル・アグロエコロジー・コモンズ」の基盤となる専用Nostrリレーサーバーを構築するための公式ガイドです。
 
@@ -17,9 +17,9 @@
 *   **ドメインの取得:**
     *   例: `relay.your-domain.com`（取得したドメインのAレコードを、VPSのIPアドレスに向けておいてください）
 *   **必須ソフトウェア:**
-    *   Git, Docker, Docker Compose v2 がインストールされていること。
-*   **§6 のJSONLアーカイブ機能を使う場合の追加要件:**
-    *   `nak`（Nostr CLIツール）および `git` がサーバーにインストールされていること。
+    *   Git, Docker, Docker Compose v2, nak がインストールされていること。
+    *   インストール手順は [PREREQUISITE_INSTALLATION.md](./PREREQUISITE_INSTALLATION.md) を参照してください。
+    *   **重要:** PREREQUISITE_INSTALLATION.md の手順完了後、必ずSSHセッションを切断して再接続してからこのガイドに進んでください。
 
 ---
 
@@ -37,7 +37,7 @@ cd nostream
 ```
 
 ### Step 2.2: セキュリティキーの生成（.env）
-Nostreamを安全に稼働させるための「シークレットキー」を生成して `.env` ファイルに記述します。（リレーの詳細設定は次の Step 2.3 で行います）
+Nostreamを安全に稼働させるための「シークレットキー」を生成して `.env` ファイルに記述します。
 
 ```bash
 # デフォルトの設定ファイルをコピー
@@ -47,55 +47,21 @@ cp .env.example .env
 echo "SECRET=$(openssl rand -hex 128)" >> .env
 ```
 
-### Step 2.3: アグロエコロジー専用設定（settings.yaml）
-「Kind 11042 のみを受け付ける」という強力なホワイトリスト設定や、リレーのプロフィール情報は `.nostr/settings.yaml` に記述します。
+※ このコマンドは **一度だけ** 実行してください。複数回実行すると `SECRET=` の行が重複します。重複した場合は `nano .env` で開いて余分な行を削除してください。
+
+### Step 2.3: 設定ディレクトリと postgresql.conf の準備
+Nostreamが使用するディレクトリと、PostgreSQLの設定ファイルを事前に作成します。
+
+**この手順を省略すると、Dockerが `postgresql.conf` を誤ってディレクトリとして作成してしまい、データベースが起動できなくなります。必ず実行してください。**
 
 ```bash
-# 設定ディレクトリを作成し、デフォルト設定をコピー
-mkdir -p .nostr
-cp resources/default-settings.yaml .nostr/settings.yaml
+# 設定ディレクトリを作成
+mkdir -p .nostr/data
+mkdir -p .nostr/db-logs
 
-# 設定ファイルを編集 (nano エディタを使用)
-nano .nostr/settings.yaml
+# postgresql.conf をファイルとして事前生成（重要）
+docker run --rm postgres:15 cat /usr/share/postgresql/postgresql.conf.sample > postgresql.conf
 ```
-
-ファイルを開いたら、以下の構成になるように該当部分を変更・追記してください。
-（※YAMLファイルはインデントが厳密です。タブ文字は使わず半角スペースを使用してください）
-
-```yaml
-info:
-  relay_url: wss://relay.your-domain.com
-  name: "Agroecology Commons Relay (Kyushu)"
-  description: "九州地域の有機農家コミュニティが運営する、アグロエコロジー『問いの循環』専用リレーです。"
-  pubkey: "<あなたのNostr公開鍵（hex形式）があれば入力>"
-  contact: "mailto:admin@your-domain.com"
-
-# --- 中略（paymentsなどの他項目はデフォルトのままでOK） ---
-
-limits:
-  client:
-    subscription:
-      # アプリからの同時接続や検索の過剰な要求を防ぐ
-      maxSubscriptions: 10
-      maxFilters: 10
-  event:
-    eventId:
-      # 計算証明（PoW）は要求しない
-      minLeadingZeroBits: 0
-    kind:
-      # Kind 11042（問い）のイベントのみを保存・配信する
-      whitelist:
-        - 11042
-      blacklist: []
-    createdAt:
-      # 古すぎる/未来すぎるタイムスタンプのイベントを拒否
-      maxPositiveDelta: 60
-      maxNegativeDelta: 31536000 # (1年前まで)
-    content:
-      # 巨大なデータ（画像スパム等）を防ぐため、イベントサイズを20KBに制限
-      maxLength: 20000
-```
-*※編集が終わったら `Ctrl + O` → `Enter` で保存し、`Ctrl + X` で閉じます。*
 
 ### Step 2.4: docker-compose.yml の調整（ネットワーク競合回避）
 Nostreamのデフォルト設定のまま起動すると、VPSの環境によってはネットワーク競合によるエラー（起動ループ）が発生します。これを未然に防ぐため、固定IP設定を解除してDockerに自動割り当てさせます。
@@ -107,16 +73,90 @@ nano docker-compose.yml
 
 1. 各コンテナ（`nostream`, `nostream-db`, `nostream-cache`）の `ipv4_address: 10.10.10.x` の行
 2. ファイルの一番下にある `subnet: 10.10.10.0/24` およびその上の `ipam:` 関連の行
+
 *(※さらに安全性を高めるため、外部公開が不要な `nostream-db` の `5432:5432` と `nostream-cache` の `6379:6379` のポート指定もコメントアウトしておくことを推奨します)*
 
-### Step 2.5: データベースのセットアップと起動
-NostreamはPostgreSQLを使用します。Docker Composeを使って一発で起動します。（※権限エラーを防ぐため `sudo` を付けて実行します）
+### Step 2.5: パーミッションの設定
+Dockerコンテナ内のプロセスは特定のユーザーで動作するため、ホスト側のディレクトリのオーナーを合わせておく必要があります。
+
+```bash
+# nostreamコンテナ用（node ユーザー: UID=1000）
+sudo chown -R 1000:1000 .nostr
+
+# PostgreSQLコンテナ用（postgres ユーザー: UID=999）
+sudo chown -R 999:999 .nostr/data
+sudo chown -R 999:999 .nostr/db-logs
+```
+
+### Step 2.6: データベースのセットアップと初回起動
+NostreamはPostgreSQLを使用します。Docker Composeを使って一発で起動します。
 
 ```bash
 # Nostream本体とデータベース(PostgreSQL)のビルドと起動（バックグラウンド実行）
 sudo docker compose up -d
 ```
-起動後、`sudo docker compose logs -f nostream` を実行し、エラーが出ずに一番最後に `Server listening on port 8008` または `nostream is running` と表示されていれば内部サーバーの起動は成功です。（監視から抜けるには `Ctrl + C`）
+
+起動後、以下のコマンドでログを確認してください。エラーが出ずに `Server listening on port 8008` または `nostream is running` と表示されていれば内部サーバーの起動は成功です。（監視から抜けるには `Ctrl + C`）
+
+```bash
+sudo docker compose logs -f nostream
+```
+
+### Step 2.7: アグロエコロジー専用設定（settings.json）
+初回起動によって `.nostr/settings.json` が自動生成されます。このファイルに「Kind 11042 のみを受け付ける」という強力なホワイトリスト設定や、リレーのプロフィール情報を記述します。
+
+まず生成されたことを確認します。
+
+```bash
+ls -la .nostr/settings.json
+```
+
+確認できたら編集します。
+
+```bash
+nano .nostr/settings.json
+```
+
+ファイルを開いたら、以下の項目を該当箇所に合わせて変更・追記してください。（※JSONファイルはカンマや括弧の対応が厳密です。編集後に構文エラーがないか注意してください）
+
+```json
+{
+  "info": {
+    "relay_url": "wss://relay.your-domain.com",
+    "name": "Agroecology Commons Relay (Kyushu)",
+    "description": "九州地域の有機農家コミュニティが運営する、アグロエコロジー『問いの循環』専用リレーです。",
+    "pubkey": "<あなたのNostr公開鍵（hex形式）があれば入力>",
+    "contact": "mailto:admin@your-domain.com"
+  },
+  "limits": {
+    "client": {
+      "subscription": {
+        "maxSubscriptions": 10,
+        "maxFilters": 10
+      }
+    },
+    "event": {
+      "kind": {
+        "whitelist": [11042],
+        "blacklist": []
+      },
+      "createdAt": {
+        "maxPositiveDelta": 60,
+        "maxNegativeDelta": 31536000
+      },
+      "content": {
+        "maxLength": 20000
+      }
+    }
+  }
+}
+```
+
+編集が終わったら `Ctrl + O` → `Enter` で保存し、`Ctrl + X` で閉じます。その後、設定を反映するためにnostreamを再起動します。
+
+```bash
+sudo docker compose restart nostream
+```
 
 ---
 
@@ -277,17 +317,19 @@ sudo docker compose up -d
 
 ---
 
-### Step 6.1: `nak` のインストール
+### Step 6.1: `nak` のインストール確認
 
-`nak` はNostrイベントを操作するための軽量CLIツールです。
+`nak` は [PREREQUISITE_INSTALLATION.md](./PREREQUISITE_INSTALLATION.md) でインストール済みです。念のため動作を確認してください。
 
 ```bash
-# Go製バイナリのダウンロード（最新版はGitHubリリースページを確認）
-curl -L https://github.com/fiatjaf/nak/releases/latest/download/nak-linux-amd64 -o /usr/local/bin/nak
-chmod +x /usr/local/bin/nak
-
-# 動作確認
 nak --version
+```
+
+インストールされていない場合は以下を実行してください。
+
+```bash
+sudo curl -L https://github.com/fiatjaf/nak/releases/latest/download/nak-linux-amd64 -o /usr/local/bin/nak
+sudo chmod +x /usr/local/bin/nak
 ```
 
 ---
@@ -303,8 +345,6 @@ cd ~/nostr-archive/agroecology-commons
 
 # Gitリポジトリの初期化
 git init
-git config user.name "Agroecology Commons Relay"
-git config user.email "admin@your-domain.com"
 
 # .gitignoreの設定（一時ファイルを除外）
 echo "*.tmp" > .gitignore
@@ -312,6 +352,8 @@ echo ".DS_Store" >> .gitignore
 git add .gitignore
 git commit -m "init: アグロエコロジー・コモンズ アーカイブリポジトリを初期化"
 ```
+
+※ Git のユーザー名・メールアドレスは [PREREQUISITE_INSTALLATION.md](./PREREQUISITE_INSTALLATION.md) の Step 3 でグローバル設定済みのため、ここでの設定は不要です。
 
 ---
 
@@ -368,7 +410,7 @@ cd "$ARCHIVE_DIR" || exit 1
 
 # 最後にエクスポートしたイベントのタイムスタンプを取得
 # (ファイルが存在しない場合は0＝全件取得)
-if[ -f "$ARCHIVE_FILE" ]; then
+if [ -f "$ARCHIVE_FILE" ]; then
     # JSONLの最終行からcreated_atを取得
     LAST_TS=$(tail -1 "$ARCHIVE_FILE" | python3 -c "import sys,json; print(json.load(sys.stdin).get('created_at',0))" 2>/dev/null || echo 0)
 else
@@ -383,7 +425,7 @@ nak req -k 11042 --since "$LAST_TS" "$RELAY" > "$TMP_FILE" 2>> "$LOG_FILE"
 
 NEW_COUNT=$(wc -l < "$TMP_FILE")
 
-if[ "$NEW_COUNT" -eq 0 ]; then
+if [ "$NEW_COUNT" -eq 0 ]; then
     echo "[$TIMESTAMP] 新規イベントなし。スキップ。" >> "$LOG_FILE"
     rm "$TMP_FILE"
     exit 0
@@ -397,7 +439,7 @@ python3 - <<'EOF'
 import json, sys
 
 seen = set()
-unique_lines =[]
+unique_lines = []
 with open("questions.jsonl", "r") as f:
     for line in f:
         line = line.strip()
@@ -521,4 +563,4 @@ commit 2c4a1f0  archive: 2026-05-30 +5件追加（累計 320件）
 ---
 
 *このガイドはデジタル・アグロエコロジー・コモンズ推進プロジェクトの一環として作成されました。*
-*v2.2 — 2026年4月改訂*
+*v2.3 — 2026年4月改訂*
