@@ -1,5 +1,8 @@
 # Toitoi エッジ・アーキテクチャ設計書：ローカルAIと「問い」の生成
-**バージョン: 1.1**
+**バージョン: 2.0**　｜　前バージョン (v1.1) からの主な修正：
+* §4 コード例のリレー数を3つに拡張（アンカー・地域・パブリック）し、`Promise.allSettled()` による並列送信に変更（ARCHITECTURE §2.2 フェイルセーフ要件への対応）。
+* §4 コード例の `relationship` タグ値を `nutrient_cycle` → `nutrient` に修正（ARCHITECTURE §3.2 推奨ボキャブラリーへの統一）。
+* §3・§4 に `trigger` タグのサンプルおよびコメントを追加（ARCHITECTURE §3.1 任意タグ仕様の明示）。
 
 本ドキュメントは、デジタル・アグロエコロジー・コモンズ「Toitoi」における **ローカルAI・エッジ層（エッジクライアント）** のリファレンス実装ガイドです。
 
@@ -40,7 +43,7 @@
 出力されたJSONを、`nostr-tools` 等のライブラリを使用してハッシュ化（ID生成）し、農家の秘密鍵でシュノア署名（Schnorr signature）を施します。
 
 ### 2.4 マルチパブリッシュ・フェーズ
-署名済みのイベントを、コモンズを構成する複数のリレー（アンカーリレー、地域リレー等）へWebSocket（`wss://`）経由で同時に送信します。
+署名済みのイベントを、コモンズを構成する**3つ以上**のリレー（アンカーリレー、地域リレー、パブリックリレー）へWebSocket（`wss://`）経由で**並列に**同時送信します。フェイルセーフのため、いずれかのリレーへの送信が失敗しても他のリレーへの送信は継続されます。
 
 ---
 
@@ -61,12 +64,15 @@
     ["context", "soil_type", "volcanic_ash"],
     ["relationship", "microclimate", "weed_flora"],
     ["phase", "intermediate"],
+    ["trigger", "sensor_anomaly", "soil_moisture"],  // [任意] 問いの起点となったセンサー異常等
     ["e", "<親イベントID>", "wss://relay.cultivationdata.net", "derived_from"]
   ],
   "id": "<sha256(serialize(event))>",
   "sig": "<schnorr_signature(id, privkey)>"
 }
 ```
+
+> **`trigger` タグについて:** センサー異常や特定の観察が問いの直接的な起点となった場合に付与する任意タグです（ARCHITECTURE §3.1 参照）。フォーマット: `["trigger", "<category>", "<value>"]`。自動生成パイプラインでは、センサー異常検知時に自動付与することを推奨します。
 
 ---
 
@@ -93,8 +99,9 @@ const inquiryPayload = {
         ["t", "agroecology"],
         ["context", "climate_zone", "cool-temperate"],
         ["context", "soil_type", "volcanic_ash"],
-        ["relationship", "weed_flora", "nutrient_cycle"],
+        ["relationship", "weed_flora", "nutrient"],         // ← v1.1の "nutrient_cycle" を推奨ボキャブラリー "nutrient" に修正
         ["phase", "intermediate"],
+        ["trigger", "sensor_anomaly", "soil_moisture"],     // [任意] センサー異常が問いの起点の場合に付与
         ["e", "abc123def456...", "wss://relay.cultivationdata.net", "derived_from"]
     ]
 };
@@ -103,24 +110,37 @@ const inquiryPayload = {
 const signedEvent = finalizeEvent(inquiryPayload, secretKey);
 console.log("署名済みイベントID:", signedEvent.id);
 
-// 4. コモンズ・ネットワークへ送信（マルチパブリッシュ）
+// 4. コモンズ・ネットワークへ送信（マルチパブリッシュ：3つ以上のリレーへ並列送信）
+// フェイルセーフ: Promise.allSettled により、一部のリレーが失敗しても他への送信を継続
 async function publishToCommons() {
     const targetRelays = [
-        'wss://relay.cultivationdata.net', // アンカーリレー
-        'wss://relay.local.cultivationdata.net' // 地域のコモンズリレー
+        'wss://relay.cultivationdata.net',            // アンカーリレー（必須）
+        'wss://relay.local.cultivationdata.net',      // 地域のコモンズリレー
+        'wss://relay.damus.io'                        // パブリックリレー（冗長性確保）
     ];
 
-    for (const url of targetRelays) {
-        try {
+    const results = await Promise.allSettled(
+        targetRelays.map(async (url) => {
             const relay = await Relay.connect(url);
             await relay.publish(signedEvent);
-            console.log(`✅ [${url}] へ送信完了`);
             relay.close();
-        } catch (error) {
-            console.error(`❌ [${url}] への送信失敗:`, error);
+            return url;
+        })
+    );
+
+    results.forEach((result, i) => {
+        if (result.status === 'fulfilled') {
+            console.log(`✅ [${targetRelays[i]}] へ送信完了`);
+        } else {
+            console.error(`❌ [${targetRelays[i]}] への送信失敗:`, result.reason);
         }
-    }
+    });
 }
 
 publishToCommons();
 ```
+
+---
+
+*このドキュメントはデジタル・アグロエコロジー・コモンズ推進プロジェクトの一環として作成されました。*
+*v2.0 — 2026年4月改訂*
