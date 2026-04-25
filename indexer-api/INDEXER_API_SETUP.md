@@ -459,7 +459,7 @@ pm2 logs        # リアルタイムログを表示（Ctrl+C で終了）
 
 ### 5.2 Caddy（自動HTTPS受付係）の設定
 
-インターネットからのアクセス（https://api.toitoi.cultivationdata.net）を受け取り、内部のAPI（3000ポート）に安全に繋ぎます。Caddy最大の魅力は、**設定ファイルにドメイン名を書くだけで、裏側で自動的にLet's EncryptからSSL証明書を取得し、永久に自動更新し続けてくれる**点です。
+インターネットからのアクセス（ https://api.toitoi.cultivationdata.net ）を受け取り、内部のAPI（3000ポート）に安全に繋ぎます。Caddy最大の魅力は、**設定ファイルにドメイン名を書くだけで、裏側で自動的にLet's EncryptからSSL証明書を取得し、永久に自動更新し続けてくれる**点です。
 
 **`Caddyfile` の記述例（これだけで完結します）:**
 
