@@ -26,7 +26,7 @@ This system is a decentralized platform implementing the "Circulation of Inquiry
       ▼ (WebSocket WSS / Multi-publish)
 ===================================================================
 [ Commons Relay Layer (P2P Network) ]
-  ③ Anchor Relay (wss://relay.cultivationdata.net)
+  ③ Anchor Relay (wss://relay.toitoi.cultivationdata.net)
   ③ Community Relay (wss://relay.local-agri.org) ...etc
       │ 
       ├─ (Allows only Kind:11042 and saves to PostgreSQL)
@@ -137,7 +137,7 @@ The data payload specification for the "Form of Inquiry (Boundary Object)," whic
     // [Optional / Multiple allowed] Lineage: Chain of translation
     // Format: ["e", "<parent_event_id>", "<relay_url>", "<relation_type>"]
     // relation_type: "derived_from" | "synthesis"
-    ["e", "parent_id_hex...", "wss://relay.cultivationdata.net", "derived_from"]
+    ["e", "parent_id_hex...", "wss://relay.toitoi.cultivationdata.net", "derived_from"]
   ],
   "id": "<32-bytes hex string: sha256(serialize(event))>",
   "sig": "<64-bytes hex string: schnorr_signature(id, privkey)>"
@@ -197,7 +197,7 @@ Operational policies to maintain Ostrom's "Design principles for Common Pool Res
       ▼ (WebSocket WSS / マルチパブリッシュ)
 ===================================================================
 [ コモンズ・リレー層 (P2P Network) ]
-  ③ アンカーリレー (wss://relay.cultivationdata.net)
+  ③ アンカーリレー (wss://relay.toitoi.cultivationdata.net)
   ③ コミュニティリレー (wss://relay.local-agri.org) ...etc
       │ 
       ├─ (Kind:11042 のみを許可しPostgreSQLへ保存)
@@ -308,7 +308,7 @@ Operational policies to maintain Ostrom's "Design principles for Common Pool Res
     // [任意/複数可] Lineage: 問いの系譜（翻訳の連鎖）
     // フォーマット: ["e", "<parent_event_id>", "<relay_url>", "<relation_type>"]
     // relation_type: "derived_from"(派生) | "synthesis"(結合)
-    ["e", "parent_id_hex...", "wss://relay.cultivationdata.net", "derived_from"]
+    ["e", "parent_id_hex...", "wss://relay.toitoi.cultivationdata.net", "derived_from"]
   ],
   "id": "<32-bytes hex string: sha256(serialize(event))>",
   "sig": "<64-bytes hex string: schnorr_signature(id, privkey)>"
