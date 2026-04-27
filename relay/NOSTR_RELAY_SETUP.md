@@ -1,5 +1,5 @@
 # 構築ガイド：アグロエコロジー・コモンズ専用リレーの立ち上げ方
-**バージョン：2.4**　｜　前バージョン (v2.3) からの主な修正：Nostream v2.1.1 は `settings.json` ではなく **`settings.yaml`** を使用することを確認・修正。設定ファイルはテンプレートからの手動コピーが必要（自動生成されない）。ブラウザでのNIP-11確認表示がJSONになることを正常動作として明記。`retention.kind.whitelist` の修正手順を追加。
+**バージョン：2.5**　｜　前バージョン (v2.4) からの主な修正：`settings.yaml` をToitoi専用の最小構成に整理。支払い機能（`payments`詳細・`paymentsProcessors`）、`nip05`詳細設定、未使用の`mirroring`セクションを削除。`info.self`（非標準項目）を削除。`network.trustedProxies`およびレート制限の`ipWhitelist`から、docker-compose.ymlで固定IP設定を削除済みの`10.10.10.x`系アドレスを除去。`settings.yaml`の全文テンプレートをガイド内に掲載。
 
 本ドキュメントは、「デジタル・アグロエコロジー・コモンズ」の基盤となる専用Nostrリレーサーバーを構築するための公式ガイドです。
 
@@ -131,7 +131,7 @@ sudo chown 1000:1000 .nostr/settings.yaml
 nano .nostr/settings.yaml
 ```
 
-**① `info` セクション（ファイル冒頭）を編集：**
+**ファイルの内容をすべて削除し、以下の全文をそのまま貼り付けてください。**
 
 `pubkey` にはリレー運営者自身のNostr公開鍵（hex形式）を記載します。まだ鍵ペアを持っていない場合は `nak` で生成してください。
 
@@ -149,31 +149,52 @@ echo "npub: $(echo $SECRET | nak key public | nak encode npub)"
 nak decode npub1xyz...
 ```
 
-変換されたhex文字列を `pubkey:` に記載します。
+変換されたhex文字列を `pubkey:` に記載したうえで、以下の全文を貼り付けてください。
 
 ```yaml
 info:
   relay_url: wss://relay.your-domain.com
-  name: Digital Agroecology Commons Relay
-  description: デジタル・アグロエコロジー・コモンズ専用リレー。Kind 11042（問いの循環）のみを保存します。
+  name: your-domain.com
+  description: Dedicated relay for the Digital Agroecology Commons. Only Kind 11042 events are stored.
+  banner: https://your-domain.com/logo.png
+  icon: https://your-domain.com/logo.png
   pubkey: （nak decode で得たhex形式の公開鍵）
   contact: mailto:admin@your-domain.com
-```
-
-**② `limits.event` セクション内の4箇所を編集：**
-
-`retention.kind.whitelist` を空にします（デフォルトで `62` が入っています）：
-
-```yaml
+  terms_of_service: https://github.com/nkkmd/Toitoi/
+payments:
+  enabled: false
+nip05:
+  mode: disabled
+nip45:
+  enabled: true
+network:
+  maxPayloadSize: 524288
+  trustedProxies:
+    - "127.0.0.1"
+    - "::ffff:127.0.0.1"
+    - "::1"
+workers:
+  count: 0
+limits:
+  rateLimiter:
+    strategy: ewma
+  connection:
+    rateLimits:
+      - period: 1000
+        rate: 12
+      - period: 60000
+        rate: 48
+    ipWhitelist:
+      - "::1"
+  event:
     retention:
       maxDays: -1
       kind:
         whitelist: []
-```
-
-`kind.whitelist` に `11042` のみを設定します。**インデントに注意してください。`kind:` は `pubkey:` と同じ階層です。`pubkey.whitelist` に誤って書き込まないよう確認してください：**
-
-```yaml
+      pubkey:
+        whitelist: []
+    eventId:
+      minLeadingZeroBits: 0
     kind:
       whitelist:
         - 11042
@@ -181,27 +202,56 @@ info:
     pubkey:
       minBalance: 0
       minLeadingZeroBits: 0
-      whitelist: []    # ← ここは空のまま
-```
-
-`createdAt.maxNegativeDelta` を修正します（デフォルト `0` のままだと過去のイベントが一切受け付けられずタイムアウトになります）：
-
-```yaml
+      whitelist: []
+      blacklist: []
     createdAt:
       maxPositiveDelta: 900
-      maxNegativeDelta: 31536000    # 1年分の余裕を持たせる
-```
-
-`content` セクション全体を置き換えて、イベントサイズを20KBに制限します（画像スパム等の巨大データを防ぐため）。このリレーはKind 11042専用のため、複雑なkind範囲指定は不要です：
-
-```yaml
+      maxNegativeDelta: 31536000
     content:
       - description: 20 KB limit for Kind 11042 (agroecology inquiry)
         maxLength: 20480
         kinds:
           - - 11042
             - 11042
+    rateLimits:
+      - description: 60 events/min for all events
+        period: 60000
+        rate: 60
+    whitelists:
+      pubkeys: []
+      ipAddresses:
+        - "::1"
+  client:
+    subscription:
+      maxSubscriptions: 10
+      maxFilters: 10
+      maxFilterValues: 2500
+      maxSubscriptionIdLength: 256
+      maxLimit: 5000
+      minPrefixLength: 4
+  message:
+    rateLimits:
+      - description: 240 raw messages/min
+        period: 60000
+        rate: 240
+    ipWhitelist:
+      - "::1"
 ```
+
+**各設定項目の意図（参考）：**
+
+| セクション | 設定値 | 意図 |
+|---|---|---|
+| `payments.enabled` | `false` | 投稿に課金しない。コモンズとして完全オープンに運用する |
+| `nip05.mode` | `disabled` | NIP-05（ドメイン認証）を要求しない。参加障壁をゼロにする |
+| `nip45.enabled` | `true` | COUNTクエリを許可。インデクサーAPIからの件数取得に使用 |
+| `workers.count` | `0` | CPUコア数に応じて自動決定（1vCPU環境では実質1ワーカー） |
+| `kind.whitelist` | `[11042]` | Kind 11042（問いの循環）のみ受け付ける。スパム完全遮断 |
+| `retention.maxDays` | `-1` | 永続保存。問いの系譜を消さない |
+| `retention.kind.whitelist` | `[]` | 保存対象kindの追加制限なし（kind.whitelistで制御済み） |
+| `createdAt.maxNegativeDelta` | `31536000` | 1年前までの過去イベントを受け付ける。アーカイブ復元時に必要 |
+| `content.maxLength` | `20480` | 20KB上限。画像スパム等の巨大データを防ぐ |
+| `trustedProxies` | ループバックのみ | docker-compose.ymlで固定IP設定を削除済みのため`10.10.10.x`系は不要 |
 
 編集が終わったら `Ctrl + O` → `Enter` で保存し、`Ctrl + X` で閉じます。その後、設定を反映するためにnostreamを再起動します。
 
@@ -614,4 +664,4 @@ commit 2c4a1f0  archive: 2026-05-30 +5件追加（累計 320件）
 ---
 
 *このガイドはデジタル・アグロエコロジー・コモンズ推進プロジェクトの一環として作成されました。*
-*v2.4 — 2026年4月改訂*
+*v2.5 — 2026年4月改訂*
