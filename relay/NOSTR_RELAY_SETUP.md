@@ -1,5 +1,5 @@
 # 構築ガイド：アグロエコロジー・コモンズ専用リレーの立ち上げ方
-**バージョン：3.1**　｜　前バージョン (v3.0) からの主な修正：nak req による保存データ確認コマンドをセクション5（運用と保守）に追加。
+**バージョン：3.2**　｜　前バージョン (v3.1) からの主な修正：複数の処理を `python3` から `node` に変更。
 
 本ドキュメントは、「デジタル・アグロエコロジー・コモンズ」の基盤となる専用Nostrリレーサーバーを構築するための公式ガイドです。
 
@@ -537,7 +537,7 @@ cd "$ARCHIVE_DIR" || exit 1
 # (ファイルが存在しない場合は0＝全件取得)
 if [ -f "$ARCHIVE_FILE" ]; then
     # JSONLの最終行からcreated_atを取得
-    LAST_TS=$(tail -1 "$ARCHIVE_FILE" | python3 -c "import sys,json; print(json.load(sys.stdin).get('created_at',0))" 2>/dev/null || echo 0)
+    LAST_TS=$(tail -1 "$ARCHIVE_FILE" | node -e "let d=''; process.stdin.on('data',c=>d+=c); process.stdin.on('end',()=>{ try{ process.stdout.write(String(JSON.parse(d).created_at||0)) }catch(e){ process.stdout.write('0') } })" 2>/dev/null || echo 0)
 else
     LAST_TS=0
 fi
@@ -560,29 +560,27 @@ fi
 cat "$TMP_FILE" >> "$ARCHIVE_FILE"
 
 # IDの重複排除（同じイベントが二重取得された場合の保険）
-python3 - <<'EOF'
-import json, sys
+node - <<'EOF'
+const fs = require('fs');
 
-seen = set()
-unique_lines = []
-with open("questions.jsonl", "r") as f:
-    for line in f:
-        line = line.strip()
-        if not line:
-            continue
-        try:
-            event = json.loads(line)
-            eid = event.get("id")
-            if eid and eid not in seen:
-                seen.add(eid)
-                unique_lines.append(line)
-        except json.JSONDecodeError:
-            pass  # 壊れた行はスキップ
+const lines = fs.readFileSync('questions.jsonl', 'utf8')
+  .split('\n')
+  .filter(l => l.trim());
 
-with open("questions.jsonl", "w") as f:
-    f.write("\n".join(unique_lines) + "\n")
+const seen = new Set();
+const unique = [];
+for (const line of lines) {
+  try {
+    const event = JSON.parse(line);
+    if (event.id && !seen.has(event.id)) {
+      seen.add(event.id);
+      unique.push(line);
+    }
+  } catch {}
+}
 
-print(f"重複排除後の総イベント数: {len(unique_lines)}")
+fs.writeFileSync('questions.jsonl', unique.join('\n') + '\n');
+console.log(`重複排除後の総イベント数: ${unique.length}`);
 EOF
 
 rm "$TMP_FILE"
@@ -739,31 +737,30 @@ echo "現在のファイルサイズ: ${SIZE_MB}MB"
 echo "年別分割を開始します..."
 
 # --- 年別に分割 ---
-python3 - <<'EOF'
-import json, datetime
+node - <<'EOF'
+const fs = require('fs');
 
-src = "questions.jsonl"
-year_lines = {}
+const lines = fs.readFileSync('questions.jsonl', 'utf8')
+  .split('\n')
+  .filter(l => l.trim());
 
-with open(src, "r") as f:
-    for line in f:
-        line = line.strip()
-        if not line:
-            continue
-        try:
-            event = json.loads(line)
-            year = str(datetime.datetime.utcfromtimestamp(event["created_at"]).year)
-            year_lines.setdefault(year, []).append(line)
-        except Exception:
-            pass
+const yearLines = {};
+for (const line of lines) {
+  try {
+    const event = JSON.parse(line);
+    const year = new Date(event.created_at * 1000).getUTCFullYear().toString();
+    (yearLines[year] ??= []).push(line);
+  } catch {}
+}
 
-for year, lines in sorted(year_lines.items()):
-    fname = f"questions_{year}.jsonl"
-    with open(fname, "w") as f:
-        f.write("\n".join(lines) + "\n")
-    print(f"  ✅ {fname}: {len(lines)}件")
-
-print(f"\n合計 {sum(len(v) for v in year_lines.values())} 件を分割しました")
+let total = 0;
+for (const [year, lines] of Object.entries(yearLines).sort()) {
+  const fname = `questions_${year}.jsonl`;
+  fs.writeFileSync(fname, lines.join('\n') + '\n');
+  console.log(`  ✅ ${fname}: ${lines.length}件`);
+  total += lines.length;
+}
+console.log(`\n合計 ${total} 件を分割しました`);
 EOF
 
 # --- 元ファイルを削除 ---
