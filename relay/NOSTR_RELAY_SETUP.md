@@ -1,5 +1,5 @@
 # 構築ガイド：アグロエコロジー・コモンズ専用リレーの立ち上げ方
-**バージョン：3.0**　｜　前バージョン (v2.5) からの主な修正：セクション6に「Step 6.8: JSONLアーカイブのファイル分割」を追加。`questions.jsonl` が50MBを超えた際に年別ファイルへ分割する `split_archive.sh` スクリプト、`archive_diff.sh` へのサイズ警告ログ追加、分割後の復元コマンド変更点を追記。
+**バージョン：3.1**　｜　前バージョン (v3.0) からの主な修正：nak req による保存データ確認コマンドをセクション5（運用と保守）に追加。
 
 本ドキュメントは、「デジタル・アグロエコロジー・コモンズ」の基盤となる専用Nostrリレーサーバーを構築するための公式ガイドです。
 
@@ -393,6 +393,30 @@ cd nostream
 sudo docker exec -t nostream-db-1 pg_dumpall -c -U nostr_ts_relay > dump_`date +%Y-%m-%d`.sql
 ```
 *(※ユーザー名等の環境によってエラーが出る場合は、適宜確認してください)*
+
+### 保存データの確認（nak req）
+
+リレーに蓄積されたイベントを `nak req` コマンドで確認します。
+
+```bash
+# 全件取得（Ctrl+C で停止）
+nak req -k 11042 wss://relay.your-domain.com
+
+# 件数だけ確認（NIP-45 COUNT）
+nak count -k 11042 wss://relay.your-domain.com
+
+# jqで整形して読む
+nak req -k 11042 wss://relay.your-domain.com | jq .
+
+# contentだけ抜き出す
+nak req -k 11042 wss://relay.your-domain.com | jq -r .content
+
+# 新しい順に10件だけ
+nak req -k 11042 --limit 10 wss://relay.your-domain.com | jq .
+
+# 今日以降に絞る
+nak req -k 11042 --since $(date -d "today 00:00" +%s) wss://relay.your-domain.com | jq .
+```
 
 ### システムのアップデート
 Nostreamの最新のセキュリティパッチを適用する場合は以下を実行します。
@@ -810,5 +834,7 @@ cat questions_*.jsonl | nak event wss://new-relay.your-domain.com
 
 ---
 
+---
+
 *このガイドはデジタル・アグロエコロジー・コモンズ推進プロジェクトの一環として作成されました。*
-*v3.0 — 2026年4月改訂*
+*v3.2 — 2026年4月改訂*
