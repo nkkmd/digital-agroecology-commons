@@ -12,6 +12,8 @@ Toitoi is a **decentralized protocol platform (digital commons)** designed to sh
 
 Instead of depending on specific companies or centralized servers, it circulates farmers' "ecological intuition (tacit knowledge)" across the network in the form of "inquiries (questions)" that can be translated and adapted by others.
 
+> **Note:** Toitoi is an experimental project that aims to implement, as actual open-source software, the "inquiry circulation system" conceived within the essay *[Letting Go of Technology in Agriculture](./Letting-Go-of-Technology-in-Agriculture.md)*. It is as much a living proof-of-concept for the ideas in that text as it is a piece of software.
+
 ## 💡 Project Philosophy: Why Toitoi?
 
 Modern smart agriculture predominantly relies on centralized models that gather raw data into the cloud and deliver "universal answers (manuals)" to farmers. However, this model eliminates the inherent complexity of local farmlands, deprives farmers of their autonomy, and leads to the "enclosure of knowledge" by platform capitalism.
@@ -72,6 +74,8 @@ To balance the defense of the commons with the expansion of the ecosystem, the T
 Toitoi（トイトイ）は、『[テクノロジーを手放す農業論](./Tech-wo-Tebanasu-Nogyoron.md)』の思想に基づき、アグロエコロジーの知を共有・進化させるための **分散型プロトコル・プラットフォーム（デジタル・コモンズ）** です。
 
 特定の企業や中央サーバーに依存せず、農家の「生態学的直感（暗黙知）」を、他者が翻訳可能な『問いの形式』としてネットワーク上で循環させます。
+
+> **本プロジェクトについて：** Toitoiは、論考『[テクノロジーを手放す農業論](./Tech-wo-Tebanasu-Nogyoron.md)』のなかで構想した「問いの循環システム」を、実際のOSSとして実装することを目指した実験的プロジェクトです。ソフトウェアであると同時に、あの論考で提示した思想の「泥臭い実証」そのものでもあります。
 
 ## 💡 プロジェクトの思想：なぜToitoiなのか？
 
