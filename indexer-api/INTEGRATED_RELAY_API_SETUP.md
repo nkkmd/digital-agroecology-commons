@@ -1,5 +1,5 @@
 # 構築ガイド：リレー＆インデクサー統合・低負荷アーキテクチャ設計書
-**バージョン：1.0**
+**バージョン：1.1**
 
 本ドキュメントは、「デジタル・アグロエコロジー・コモンズ」における**Nostrリレー（Nostream）** と**インデクサーAPI（Toitoi）** を、同一サーバー内で最も負荷を少なく、かつ効率的に運用するための「統合・低負荷アーキテクチャ」のセットアップ手順書です。
 
@@ -9,7 +9,8 @@
 
 ## 1. 統合アーキテクチャの概要とメリット
 
-```text[ スマホアプリ / Webフロントエンド ]
+```text
+[ スマホアプリ / Webフロントエンド ]
        │ (HTTPS通信)
        ▼
 ┌───────────────── サーバー本体 (Ubuntu Linux等) ─────────────────┐
@@ -42,7 +43,7 @@
 ## 2. 前提条件
 
 - [PREREQUISITE_INSTALLATION.md] に従い、必須ソフトウェア（Git, Docker, Node.js等）のインストールが完了していること。
--[NOSTR_RELAY_SETUP.md] に従い、Nostream（リレー）の基本的な構築が完了していること。
+- [NOSTR_RELAY_SETUP.md] に従い、Nostream（リレー）の基本的な構築が完了していること。
 
 ---
 
@@ -57,15 +58,35 @@ cd ~/nostream
 nano docker-compose.yml
 ```
 
-`nostream-db` サービスの `ports:` を以下のように修正します。外部からの直接アクセスを防ぐため、必ず `127.0.0.1:` を付与してください。
+`nostream-db` サービスを以下のように修正します。`ports:` ブロックを追加し、外部からの直接アクセスを防ぐため、必ず `127.0.0.1:` を付与してください。また、イメージを `postgres:15-alpine` に変更します。
 
 ```yaml
   nostream-db:
-    image: postgres:15-alpine
-    # (中略)
+    image: postgres:15-alpine   # postgres:15 から変更
+    container_name: nostream-db
+    environment:
+      POSTGRES_DB: nostr_ts_relay
+      POSTGRES_USER: nostr_ts_relay
+      POSTGRES_PASSWORD: nostr_ts_relay
+    volumes:
+      - ${PWD}/.nostr/data:/var/lib/postgresql/data
+      - ${PWD}/.nostr/db-logs:/var/log/postgresql
+      - ${PWD}/postgresql.conf:/postgresql.conf
     ports:
-      - "127.0.0.1:5432:5432"  # コメントアウトを解除し、127.0.0.1を追加
+      - "127.0.0.1:5432:5432"   # この ports: ブロックを追加
+    networks:
+      default:
+    command: postgres -c 'config_file=/postgresql.conf'
+    restart: always
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U nostr_ts_relay"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+      start_period: 360s
 ```
+
+> **注意：** `networks:` の後ろにコロン（`:`）が必要です。元のファイルにtypoがある場合は合わせて修正してください。
 
 設定を反映するためにNostreamを再起動します。
 
@@ -76,6 +97,14 @@ sudo docker compose up -d
 ### Step 3.2: インデクサー用データベースの作成
 
 稼働中のNostream DBコンテナ内に、Toitoi用のデータベースとユーザーを作成します。
+
+まず、コンテナ名を確認します。
+
+```bash
+sudo docker ps
+```
+
+`container_name: nostream-db` と設定されている場合、コンテナ名は `nostream-db` になります（`nostream-db-1` ではありません）。
 
 ```bash
 # NostreamのDBコンテナのPostgreSQLに接続
@@ -97,6 +126,8 @@ GRANT ALL PRIVILEGES ON DATABASE toitoi_db TO toitoi_user;
 
 ホストOS上にNode.js環境を構築し、データベースへの接続設定を行います。
 
+> **注意：** `~/toitoi-indexer/` はNostreamとは別の独立したディレクトリです。`~/nostream/` 配下ではありません。
+
 ### Step 4.1: パッケージのインストールと初期化
 
 Node.js(v20 LTS以上)とPM2をインストールし、プロジェクトを初期化します。
@@ -115,10 +146,12 @@ cd ~/toitoi-indexer
 npm init -y
 npm pkg set type=module
 
-# 必須ライブラリのインストール
-npm install express nostr-tools node-cron @prisma/client
-npm install --save-dev prisma
+# 必須ライブラリのインストール（Prisma v5系で固定）
+npm install express nostr-tools node-cron @prisma/client@5
+npm install --save-dev prisma@5
 ```
+
+> **Prismaバージョンについて：** Prisma v7系では `schema.prisma` の書き方が大きく変わり、追加設定が必要になります。本ガイドでは安定して動作する **v5系に固定** することを推奨します。
 
 ### Step 4.2: Prismaスキーマの作成
 
@@ -176,16 +209,28 @@ model SyncState {
 
 ### Step 4.3: 環境変数の設定とデータベースへの反映
 
-Step 3.2 で作成したデータベースの情報を `.env` に記述し、Prismaでテーブルを生成します。
+`.env` ファイルは `~/toitoi-indexer/` 直下に作成します。Step 3.2 で設定したパスワードを記述し、Prismaでテーブルを生成します。
 
 ```bash
-# .env ファイルの作成
-# (your_secure_password を Step 3.2 で設定したものに変更)
+cd ~/toitoi-indexer
+
+# .env ファイルの作成（your_secure_password を Step 3.2 で設定したものに変更）
 echo 'DATABASE_URL="postgresql://toitoi_user:your_secure_password@127.0.0.1:5432/toitoi_db?schema=public"' > .env
 
 # テーブルの作成とクライアントの生成
 npx prisma db push
 npx prisma generate
+```
+
+ディレクトリ構成はこのようになります。
+
+```
+~/toitoi-indexer/
+├── .env                ← DATABASE_URL を記述
+├── prisma/
+│   └── schema.prisma
+├── package.json
+└── node_modules/
 ```
 
 ---
@@ -487,14 +532,24 @@ sudo systemctl restart caddy
 
 ```bash
 # 両方のDB（nostr_ts_relay と toitoi_db）を含んだ全バックアップ
-sudo docker exec -t nostream-db-1 pg_dumpall -c -U postgres > full_dump_$(date +%Y-%m-%d).sql
+sudo docker exec -t nostream-db pg_dumpall -c -U postgres > full_dump_$(date +%Y-%m-%d).sql
 ```
-*(※ `pg_dumpall` 実行時は、権限エラーを避けるために `postgres` ユーザーを使用します)*
+
+> **注意：** コンテナ名は `docker-compose.yml` の `container_name:` に従います。`container_name: nostream-db` と設定している場合は `nostream-db` を使用してください（`nostream-db-1` ではありません）。`pg_dumpall` 実行時は、権限エラーを避けるために `postgres` ユーザーを使用します。
 
 ### スケールアウトのタイミング
 APIへのアクセスが急増し、Toitoiインデクサー側の複雑な再帰クエリ（WITH RECURSIVE）でDBのCPUリソースが枯渇した場合、同じDBエンジンを使っているNostream（リレー）の応答も遅くなる可能性があります。
 VPSのCPU使用率が慢性的に80%を超えるようになった場合は、この統合構成から「DBコンテナの分離」または「サーバーの分割」を検討してください。
 
 ---
+
+## 変更履歴
+
+| バージョン | 日付 | 変更内容 |
+|---|---|---|
+| v1.1 | 2026年4月 | Step 3.1: `ports:` の追加手順を具体化、`networks:` typo注意を追記。Step 3.2: コンテナ名の確認手順を追加（`nostream-db-1` → `nostream-db`）。Step 4.1: Prismaをv5系に固定、理由を明記。Step 4.3: `.env` の配置場所を明示、ディレクトリ構成図を追加。Section 7: バックアップコマンドのコンテナ名を修正。 |
+| v1.0 | 2026年4月 | 初版リリース |
+
+---
 *このガイドはデジタル・アグロエコロジー・コモンズ推進プロジェクトの一環として作成されました。*
-*v1.0 — 2026年4月*
+*v1.1 — 2026年4月*
