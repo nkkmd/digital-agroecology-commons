@@ -79,7 +79,7 @@ sudo docker compose up -d
 
 ```bash
 # NostreamのDBコンテナのPostgreSQLに接続
-sudo docker exec -it nostream-db-1 psql -U nostr_ts_relay -d postgres
+sudo docker exec -it nostream-db psql -U nostr_ts_relay -d postgres
 ```
 
 PostgreSQLのプロンプト（`postgres=#`）が表示されたら、以下を実行します。（パスワードは任意の安全なものに変更してください）
