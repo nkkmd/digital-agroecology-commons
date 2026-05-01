@@ -1,11 +1,10 @@
-# Digital Agroecology Commons: System Architecture Detailed Design v2.1
+# Digital Agroecology Commons: System Architecture Detailed Design v2.2
 
 *[日本語は下に続きます]*
 
-**Version: 2.1** | Main updates from the previous version (v2.0):
-* §3.2: Corrected `nutrient` → `nutrient_cycle` to align with TOITOI_PROTOCOL_SCHEMA.md (the authoritative protocol specification).
-* §3.2: Added `clay` and `andisol` to `soil_type` vocabulary (sync with SCHEMA §2.1).
-* §3.2: Added `farming_context` and `crop_family` context categories (sync with SCHEMA §2.1).
+**Version: 2.2** | Main updates from the previous version (v2.1):
+* §2.3: Updated REST API `GET /api/v1/inquiries/query` endpoint to support comprehensive full-text search (PGroonga) with unified filtering on `context` tags (soil_type, climate_zone, farming_context, crop_family), `relationship`, and `phase` tags; added relevance scoring and snippet highlighting.
+* §2.3: Renamed endpoint from `GET /api/v1/inquiries/search` to `GET /api/v1/inquiries/query` for clarity.
 
 ## 1. System Overview
 
@@ -91,7 +90,7 @@ An intermediate server that collects data from decentralized relays and reconstr
     *   `lineages`: parent_event_id, child_event_id, relation_type (derived_from, synthesis)
 *   **REST API Endpoint Design:**
     *   `GET /api/v1/inquiries`: Fetch the latest inquiries (with pagination).
-    *   `GET /api/v1/inquiries/search`: Filter search based on `context` tags (soil, climate, etc.).
+    *   `GET /api/v1/inquiries/query`: Unified search endpoint integrating full-text search on the `content` field (PGroonga backend) with comprehensive filtering on `context` tags (soil_type, climate_zone, farming_context, crop_family), `relationship`, and `phase` tags. When performing full-text search, returns relevance score and highlighted snippets.
     *   `GET /api/v1/inquiries/tree/:id`: Takes a specified event ID as the root, recursively joins the `lineages` table, and returns an N-level deep tree structure of child nodes (derived/synthesized inquiries) as JSON (for graph rendering).
 
 ### 2.4 Frontend Viewer Layer (UI/UX)
@@ -171,12 +170,11 @@ Operational policies to maintain Ostrom's "Design principles for Common Pool Res
 
 ---
 
-# デジタル・アグロエコロジー・コモンズ：システムアーキテクチャ詳細設計書 v2.1
+# デジタル・アグロエコロジー・コモンズ：システムアーキテクチャ詳細設計書 v2.2
 
-**バージョン：2.1**　｜　前バージョン (v2.0) からの主なアップデート：
-* §3.2：`nutrient`（養分）→ `nutrient_cycle`（養分循環）に修正（TOITOI_PROTOCOL_SCHEMA.md 正典への統一）。
-* §3.2：`soil_type` に `clay`（粘土質）・`andisol`（黒ボク土の別名）を追記（SCHEMA §2.1 との同期）。
-* §3.2：`farming_context`（栽培環境・農法）・`crop_family`（対象作物群）の context カテゴリを追加（SCHEMA §2.1 との同期）。
+**バージョン：2.2**　｜　前バージョン (v2.1) からの主なアップデート：
+* §2.3：REST API の `GET /api/v1/inquiries/query` エンドポイントを拡張し、`content` フィールド全文検索（PGroonga）と `context`（soil_type / climate_zone / farming_context / crop_family）・`relationship`・`phase` タグによる統合フィルタリングを実装。全文検索時は関連度スコアとハイライトスニペットを付与。
+* §2.3：エンドポイント名を `GET /api/v1/inquiries/search` から `GET /api/v1/inquiries/query` に変更。
 
 ## 1. システム・オーバービュー
 
@@ -262,7 +260,7 @@ Operational policies to maintain Ostrom's "Design principles for Common Pool Res
     *   `lineages`: parent_event_id, child_event_id, relation_type (derived_from, synthesis)
 *   **REST API エンドポイント設計:**
     *   `GET /api/v1/inquiries`: 最新の問い一覧を取得（ページネーション対応）。
-    *   `GET /api/v1/inquiries/search`: `context` タグ（土壌、気候など）に基づくフィルタリング検索。
+    *   `GET /api/v1/inquiries/query`: `content` フィールドの全文検索（PGroonga）と、`context`（soil_type / climate_zone / farming_context / crop_family）・`relationship`・`phase` タグによる絞り込みを統合した複合検索エンドポイント。全文検索時は関連度スコアとハイライトスニペットを付与して返す。
     *   `GET /api/v1/inquiries/tree/:id`: 指定したイベントIDをルート（根）とし、`lineages` テーブルを再帰結合して**N階層の子ノード（派生・結合された問い）をツリー構造のJSONとして返す**（グラフ描画用）。
 
 ### 2.4 フロントエンド・ビューア層（UI/UX）
