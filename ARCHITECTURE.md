@@ -91,7 +91,7 @@ An intermediate server that collects data from decentralized relays and reconstr
 *   **REST API Endpoint Design:**
     *   `GET /api/v1/inquiries`: Fetch the latest inquiries (with pagination).
     *   `GET /api/v1/inquiries/query`: Unified search endpoint integrating full-text search on the `content` field (PGroonga backend) with comprehensive filtering on `context` tags (soil_type, climate_zone, farming_context, crop_family), `relationship`, and `phase` tags. When performing full-text search, returns relevance score and highlighted snippets.
-    *   `GET /api/v1/inquiries/tree/:id`: Takes a specified event ID as the root, recursively joins the `lineages` table, and returns an N-level deep tree structure of child nodes (derived/synthesized inquiries) as JSON (for graph rendering).
+    *   `GET /api/v1/inquiries/:id/tree`: Takes a specified event ID as the root, recursively joins the `lineages` table, and returns an N-level deep tree structure of child nodes (derived/synthesized inquiries) as JSON (for graph rendering).
 
 ### 2.4 Frontend Viewer Layer (UI/UX)
 
@@ -261,7 +261,7 @@ Operational policies to maintain Ostrom's "Design principles for Common Pool Res
 *   **REST API エンドポイント設計:**
     *   `GET /api/v1/inquiries`: 最新の問い一覧を取得（ページネーション対応）。
     *   `GET /api/v1/inquiries/query`: `content` フィールドの全文検索（PGroonga）と、`context`（soil_type / climate_zone / farming_context / crop_family）・`relationship`・`phase` タグによる絞り込みを統合した複合検索エンドポイント。全文検索時は関連度スコアとハイライトスニペットを付与して返す。
-    *   `GET /api/v1/inquiries/tree/:id`: 指定したイベントIDをルート（根）とし、`lineages` テーブルを再帰結合して**N階層の子ノード（派生・結合された問い）をツリー構造のJSONとして返す**（グラフ描画用）。
+    *   `GET /api/v1/inquiries/:id/tree`: 指定したイベントIDをルート（根）とし、`lineages` テーブルを再帰結合して**N階層の子ノード（派生・結合された問い）をツリー構造のJSONとして返す**（グラフ描画用）。
 
 ### 2.4 フロントエンド・ビューア層（UI/UX）
 
