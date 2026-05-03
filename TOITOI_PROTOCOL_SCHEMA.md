@@ -3,7 +3,7 @@
 
 *[日本語は下に続きます]*
 
-This document defines the strict data schema and Standard Vocabulary for **"Inquiries" (Nostr Event Kind: 11042)**, which is the sole unit of data circulating on the network in the Toitoi Digital Agroecology Commons.
+This document defines the strict data schema and Standard Vocabulary for **"Inquiries" (Nostr Event Kind: 1042)**, which is the sole unit of data circulating on the network in the Toitoi Digital Agroecology Commons.
 
 This specification serves as the common protocol (constitution) that all module developers—Edge AI (sender), Indexer (receiver/interpreter), and Frontend (display)—must adhere to.
 
@@ -128,7 +128,7 @@ The Toitoi project envisions a protocol governance where the vocabulary is expan
 # Toitoi プロトコル・スキーマ仕様書：境界対象としてのデータ構造
 **バージョン: 1.1 (Standard Vocabulary)**
 
-本ドキュメントは、デジタル・アグロエコロジー・コモンズ「Toitoi」においてネットワーク上を流通する唯一のデータ単位である **「問い（Nostr Event Kind: 11042）」** の厳密なデータスキーマと標準語彙（Standard Vocabulary）を定義するものです。
+本ドキュメントは、デジタル・アグロエコロジー・コモンズ「Toitoi」においてネットワーク上を流通する唯一のデータ単位である **「問い（Nostr Event Kind: 1042）」** の厳密なデータスキーマと標準語彙（Standard Vocabulary）を定義するものです。
 
 この仕様は、エッジAI（送信側）、インデクサー（受信・解釈側）、フロントエンド（表示側）のすべてのモジュール開発者が準拠すべき共通プロトコル（憲法）として機能します。
 

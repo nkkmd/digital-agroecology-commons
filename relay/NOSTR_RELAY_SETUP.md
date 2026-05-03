@@ -3,7 +3,7 @@
 
 本ドキュメントは、「デジタル・アグロエコロジー・コモンズ」の基盤となる専用Nostrリレーサーバーを構築するための公式ガイドです。
 
-このリレーは、スパムや無関係なSNS投稿を一切遮断し、**アグロエコロジーの「問い（Kind: 11042）」のみを永続的に保存する「知識の図書館」** として機能します。あなたがこのリレーを立ち上げることで、特定の企業に依存しない強靭な分散ネットワーク（入れ子構造のコモンズ）が実現されます。
+このリレーは、スパムや無関係なSNS投稿を一切遮断し、**アグロエコロジーの「問い（Kind: 1042）」のみを永続的に保存する「知識の図書館」** として機能します。あなたがこのリレーを立ち上げることで、特定の企業に依存しない強靭な分散ネットワーク（入れ子構造のコモンズ）が実現されます。
 
 ---
 
@@ -155,7 +155,7 @@ nak decode npub1xyz...
 info:
   relay_url: wss://relay.your-domain.com
   name: your-domain.com
-  description: Dedicated relay for the Digital Agroecology Commons. Only Kind 11042 events are stored.
+  description: Dedicated relay for the Digital Agroecology Commons. Only Kind 1042 events are stored.
   banner: https://your-domain.com/logo.png
   icon: https://your-domain.com/logo.png
   pubkey: （nak decode で得たhex形式の公開鍵）
@@ -197,7 +197,7 @@ limits:
       minLeadingZeroBits: 0
     kind:
       whitelist:
-        - 11042
+        - 1042
       blacklist: []
     pubkey:
       minBalance: 0
@@ -208,11 +208,11 @@ limits:
       maxPositiveDelta: 900
       maxNegativeDelta: 31536000
     content:
-      - description: 20 KB limit for Kind 11042 (agroecology inquiry)
+      - description: 20 KB limit for Kind 1042 (agroecology inquiry)
         maxLength: 20480
         kinds:
-          - - 11042
-            - 11042
+          - - 1042
+            - 1042
     rateLimits:
       - description: 60 events/min for all events
         period: 60000
@@ -246,7 +246,7 @@ limits:
 | `nip05.mode` | `disabled` | NIP-05（ドメイン認証）を要求しない。参加障壁をゼロにする |
 | `nip45.enabled` | `true` | COUNTクエリを許可。インデクサーAPIからの件数取得に使用 |
 | `workers.count` | `0` | CPUコア数に応じて自動決定（1vCPU環境では実質1ワーカー） |
-| `kind.whitelist` | `[11042]` | Kind 11042（問いの循環）のみ受け付ける。スパム完全遮断 |
+| `kind.whitelist` | `[1042]` | Kind 1042（問いの循環）のみ受け付ける。スパム完全遮断 |
 | `retention.maxDays` | `-1` | 永続保存。問いの系譜を消さない |
 | `retention.kind.whitelist` | `[]` | 保存対象kindの追加制限なし（kind.whitelistで制御済み） |
 | `createdAt.maxNegativeDelta` | `31536000` | 1年前までの過去イベントを受け付ける。アーカイブ復元時に必要 |
@@ -344,9 +344,9 @@ async function test() {
 
     const sk = generateSecretKey();
 
-    // テスト1: 許可されている「問い」のイベント (Kind 11042)
+    // テスト1: 許可されている「問い」のイベント (Kind 1042)
     const validEvent = finalizeEvent({
-        kind: 11042,
+        kind: 1042,
         created_at: Math.floor(Date.now() / 1000),
         tags: [["t", "agroecology"], ["context", "test"]],
         content: "テストの問いです"
@@ -354,7 +354,7 @@ async function test() {
 
     try {
         await relay.publish(validEvent);
-        console.log(`🟢 Kind 11042 (問い) の送信に成功しました！`);
+        console.log(`🟢 Kind 1042 (問い) の送信に成功しました！`);
     } catch (e) {
         console.error(`🔴 失敗:`, e);
     }
@@ -400,22 +400,22 @@ sudo docker exec -t nostream-db-1 pg_dumpall -c -U nostr_ts_relay > dump_`date +
 
 ```bash
 # 全件取得（Ctrl+C で停止）
-nak req -k 11042 wss://relay.your-domain.com
+nak req -k 1042 wss://relay.your-domain.com
 
 # 件数だけ確認（NIP-45 COUNT）
-nak count -k 11042 wss://relay.your-domain.com
+nak count -k 1042 wss://relay.your-domain.com
 
 # jqで整形して読む
-nak req -k 11042 wss://relay.your-domain.com | jq .
+nak req -k 1042 wss://relay.your-domain.com | jq .
 
 # contentだけ抜き出す
-nak req -k 11042 wss://relay.your-domain.com | jq -r .content
+nak req -k 1042 wss://relay.your-domain.com | jq -r .content
 
 # 新しい順に10件だけ
-nak req -k 11042 --limit 10 wss://relay.your-domain.com | jq .
+nak req -k 1042 --limit 10 wss://relay.your-domain.com | jq .
 
 # 今日以降に絞る
-nak req -k 11042 --since $(date -d "today 00:00" +%s) wss://relay.your-domain.com | jq .
+nak req -k 1042 --since $(date -d "today 00:00" +%s) wss://relay.your-domain.com | jq .
 ```
 
 ### システムのアップデート
@@ -484,19 +484,19 @@ git commit -m "init: Initialize Agroecology Commons archive repository"
 
 ### Step 6.3: 手動エクスポート（初回・任意のタイミング）
 
-リレーに蓄積されたKind: 11042のイベントをJSONL形式でエクスポートします。
+リレーに蓄積されたKind: 1042のイベントをJSONL形式でエクスポートします。
 
 ```bash
 cd ~/nostr-archive/agroecology-commons
 
 # ── 全件エクスポート ──
-nak req -k 11042 wss://relay.your-domain.com > archive_$(date +%Y-%m-%d).jsonl
+nak req -k 1042 wss://relay.your-domain.com > archive_$(date +%Y-%m-%d).jsonl
 
 # エクスポートされた件数を確認
 wc -l archive_$(date +%Y-%m-%d).jsonl
 ```
 
-> **JSONL形式とは？** 1行＝1イベントのJSON。`{"id":"...","pubkey":"...","kind":11042,"content":"問いの内容",...}` という形式で、各行が独立したNostrイベントです。テキストエディタでも読め、あらゆるツールで処理できます。
+> **JSONL形式とは？** 1行＝1イベントのJSON。`{"id":"...","pubkey":"...","kind":1042,"content":"問いの内容",...}` という形式で、各行が独立したNostrイベントです。テキストエディタでも読め、あらゆるツールで処理できます。
 
 エクスポート後、Gitにコミットします。
 
@@ -546,7 +546,7 @@ echo "[$TIMESTAMP] 前回タイムスタンプ: $LAST_TS" >> "$LOG_FILE"
 
 # 前回以降の新規イベントを取得（since パラメータで差分取得）
 TMP_FILE=$(mktemp)
-nak req -k 11042 --since "$LAST_TS" "$RELAY" > "$TMP_FILE" 2>> "$LOG_FILE"
+nak req -k 1042 --since "$LAST_TS" "$RELAY" > "$TMP_FILE" 2>> "$LOG_FILE"
 
 NEW_COUNT=$(wc -l < "$TMP_FILE")
 

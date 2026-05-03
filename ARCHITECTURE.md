@@ -20,7 +20,7 @@ This system is a decentralized platform implementing the "Circulation of Inquiry
   ② Local AI Engine (Inside Edge Device)
       ├─ Converts raw data into "Inquiries (Problematizing)"
       ├─ Cryptographic signing with secret key (nsec)
-      └─ Generates JSON (Nostr Event Kind:11042)
+      └─ Generates JSON (Nostr Event Kind:1042)
       │
       ▼ (WebSocket WSS / Multi-publish)
 ===================================================================
@@ -28,7 +28,7 @@ This system is a decentralized platform implementing the "Circulation of Inquiry
   ③ Anchor Relay (wss://relay.toitoi.cultivationdata.net)
   ③ Community Relay (wss://relay.local-agri.org) ...etc
       │ 
-      ├─ (Allows only Kind:11042 and saves to PostgreSQL)
+      ├─ (Allows only Kind:1042 and saves to PostgreSQL)
       └─ [NEW] JSONL + Git Archive (Permanent storage of tamper-proof history)
 ===================================================================
       │ (WebSocket WSS / Subscribe)
@@ -57,7 +57,7 @@ A relay network designed to build a permanent knowledge database independent of 
 *   **Infrastructure Requirements:** Minimum 1vCPU / 1GB RAM / 20GB SSD (can run on cheap VPS or Raspberry Pi 4).
 *   **Custom Filtering Specs (Application-specific Relay):**
     Unlike standard Nostr relays, strict admission policies are enforced at the relay level:
-    1. Must be `kind === 11042`.
+    1. Must be `kind === 1042`.
     2. Must contain the `["t", "agroecology"]` tag.
     3. Payload size must be less than 20KB (rejecting images or massive data embeddings).
 *   **Permanent Archiving of Knowledge Lineage (JSONL + Git):**
@@ -75,7 +75,7 @@ A private module holding raw data (context), generating and signing inquiries as
 *   **Problematizing Pipeline:**
     1. **Input:** Array data from soil moisture sensors over the past week + farmer's text memos.
     2. **LLM Processing:** A dedicated prompt ("Output relational inquiries in JSON without providing prescriptions") is passed to a local small LLM (e.g., Llama-3) or commercial API (e.g., Claude 3.5 Sonnet).
-    3. **Event Construction:** Constructs and signs a Kind 11042 event using libraries like `nostr-tools`.
+    3. **Event Construction:** Constructs and signs a Kind 1042 event using libraries like `nostr-tools`.
 *   **Multi-publish Logic:**
     For fail-safe redundancy, the `EVENT` message is simultaneously broadcast to three or more configured relays (anchor relay, community relay, public relay).
 
@@ -101,7 +101,7 @@ An intermediate server that collects data from decentralized relays and reconstr
 
 ---
 
-## 3. Core Protocol Specification: Nostr Event (Kind: 11042)
+## 3. Core Protocol Specification: Nostr Event (Kind: 1042)
 
 The data payload specification for the "Form of Inquiry (Boundary Object)," which is the lifeline of this system.
 
@@ -109,7 +109,7 @@ The data payload specification for the "Form of Inquiry (Boundary Object)," whic
 
 ```json
 {
-  "kind": 11042,
+  "kind": 1042,
   "pubkey": "<32-bytes hex string>",
   "created_at": <Unix timestamp>,
   "content": "<string: Inquiry text articulated by AI or farmer>",
@@ -166,7 +166,7 @@ Operational policies to maintain Ostrom's "Design principles for Common Pool Res
 3.  **Spam Defense and Web of Trust (Utilizing NIP-32/NIP-51):**
     Since it's an open network, there's a risk of spam. To prevent this, we will introduce an algorithm that utilizes Nostr's "Mute lists" and "Follow lists" to prioritize (weight) inquiries on the UI only from public keys approved by the "actual farmer network (Web of Trust)."
 4.  **Protocol Updates:**
-    If changes to tag specifications for Kind:11042 occur, proposals and consensus-building will be conducted community-based on the Nostr network, similar to NIPs (Nostr Implementation Possibilities).
+    If changes to tag specifications for Kind:1042 occur, proposals and consensus-building will be conducted community-based on the Nostr network, similar to NIPs (Nostr Implementation Possibilities).
 
 ---
 
@@ -190,7 +190,7 @@ Operational policies to maintain Ostrom's "Design principles for Common Pool Res
   ② ローカルAIエンジン (エッジデバイス内)
       ├─ 生データを「問い(Problematizing)」に変換
       ├─ 秘密鍵(nsec)で暗号署名
-      └─ JSON (Nostr Event Kind:11042) 生成
+      └─ JSON (Nostr Event Kind:1042) 生成
       │
       ▼ (WebSocket WSS / マルチパブリッシュ)
 ===================================================================
@@ -198,7 +198,7 @@ Operational policies to maintain Ostrom's "Design principles for Common Pool Res
   ③ アンカーリレー (wss://relay.toitoi.cultivationdata.net)
   ③ コミュニティリレー (wss://relay.local-agri.org) ...etc
       │ 
-      ├─ (Kind:11042 のみを許可しPostgreSQLへ保存)
+      ├─ (Kind:1042 のみを許可しPostgreSQLへ保存)
       └─ [NEW] JSONL + Git アーカイブ (改ざん不可能な歴史の永続化)
 ===================================================================
       │ (WebSocket WSS / サブスクライブ)
@@ -227,7 +227,7 @@ Operational policies to maintain Ostrom's "Design principles for Common Pool Res
 *   **インフラ要件:** 最小 1vCPU / 1GB RAM / 20GB SSD (月額数百円のVPSやRaspberry Pi 4で稼働可能)
 *   **カスタム・フィルタリング仕様 (Application-specific Relay):**
     標準のNostrリレーとは異なり、リレー側で厳格な入場制限（Admission Policy）を設けます。
-    1.  `kind === 11042` であること。
+    1.  `kind === 1042` であること。
     2.  `tags` 内に `["t", "agroecology"]` が存在すること。
     3.  ペイロードサイズが 20KB 未満であること（画像や巨大なデータの埋め込みを拒否）。
 *   **知識の系譜の永続化（JSONL + Git アーカイブ）:**
@@ -245,7 +245,7 @@ Operational policies to maintain Ostrom's "Design principles for Common Pool Res
 *   **Problematizing（問題化）パイプライン:**
     1.  **入力:** 直近1週間の土壌水分センサーの配列データ ＋ 農家のテキストメモ。
     2.  **LLM処理:** ローカルの小規模LLM（Llama3等）または商用API（Claude 3.5 Sonnet等）に専用プロンプト（「処方箋を出さず、関係性の問いをJSONで出力せよ」）を渡す。
-    3.  **イベント構築:** Nostrの `nostr-tools` 等を用いて Kind 11042 イベントを構築し署名。
+    3.  **イベント構築:** Nostrの `nostr-tools` 等を用いて Kind 1042 イベントを構築し署名。
 *   **マルチパブリッシュ・ロジック:**
     フェイルセーフのため、設定された3つ以上のリレー（アンカーリレー、地域リレー、パブリックリレー）に対して並行して `EVENT` メッセージを送信します。
 
@@ -271,7 +271,7 @@ Operational policies to maintain Ostrom's "Design principles for Common Pool Res
 
 ---
 
-## 3. コア・プロトコル仕様：Nostr Event (Kind: 11042)
+## 3. コア・プロトコル仕様：Nostr Event (Kind: 1042)
 
 本システムの命綱である「問いの形式（バウンダリー・オブジェクト）」のデータペイロード仕様です。
 
@@ -279,7 +279,7 @@ Operational policies to maintain Ostrom's "Design principles for Common Pool Res
 
 ```json
 {
-  "kind": 11042,
+  "kind": 1042,
   "pubkey": "<32-bytes hex string>",
   "created_at": <Unix timestamp>,
   "content": "<string: AIまたは農家によって言語化された「問い」のテキスト>",
@@ -336,7 +336,7 @@ Operational policies to maintain Ostrom's "Design principles for Common Pool Res
 3.  **スパム防御とWeb of Trust (NIP-32/NIP-51の活用):**
     オープンなネットワークであるため、スパムデータの混入リスクがあります。これを防ぐため、Nostrの「Muteリスト」や「Followリスト」を活用し、「実際の農家ネットワーク（Web of Trust）」から承認されている公開鍵からの問いのみをUI上で優先表示（重みづけ）するアルゴリズムを導入します。
 4.  **プロトコルのアップデート:**
-    Kind:11042のタグ仕様変更等が発生した場合は、Nostrネットワーク上でNIP（Nostr Implementation Possibility）のような形でコミュニティベースでの提案・合意形成を行います。
+    Kind:1042のタグ仕様変更等が発生した場合は、Nostrネットワーク上でNIP（Nostr Implementation Possibility）のような形でコミュニティベースでの提案・合意形成を行います。
 
 ---
 *Created for the "Digital Agroecology Commons" Project. Based on the theory of "Agriculture that Lets Go of Technology".*

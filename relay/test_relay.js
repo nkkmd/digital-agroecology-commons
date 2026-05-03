@@ -9,9 +9,9 @@ async function test() {
 
     const sk = generateSecretKey();
 
-    // テスト1: 許可されている「問い」のイベント (Kind 11042)
+    // テスト1: 許可されている「問い」のイベント (Kind 1042)
     const validEvent = finalizeEvent({
-        kind: 11042,
+        kind: 1042,
         created_at: Math.floor(Date.now() / 1000),
         tags: [["t", "agroecology"], ["context", "test"]],
         content: "テストの問いです"
@@ -19,7 +19,7 @@ async function test() {
 
     try {
         await relay.publish(validEvent);
-        console.log(`🟢 Kind 11042 (問い) の送信に成功しました！`);
+        console.log(`🟢 Kind 1042 (問い) の送信に成功しました！`);
     } catch (e) {
         console.error(`🔴 失敗:`, e);
     }

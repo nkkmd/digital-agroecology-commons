@@ -349,7 +349,7 @@ async function runWorker() {
         const relay = await Relay.connect(RELAY_URL);
 
         // sinceが0の場合は条件を外す（リレー側のエラー回避）
-        const filter = since > 0 ? { kinds: [11042], since: since } : { kinds: [11042] };
+        const filter = since > 0 ? { kinds: [1042], since: since } : { kinds: [1042] };
         console.log(`📡 送信する条件:`, filter);
 
         relay.subscribe([filter], {
