@@ -13,7 +13,7 @@
 本手順を実行する前に、以下を確認してください。
 
 * JSONLアーカイブが存在する場合、必要に応じて手元に退避させておくこと。
-* `settings.yaml` および `worker.js` の変更内容が確定していること。
+* 変更内容が確定していること。
 * 本番稼働中のリレーに外部からのアクセスがないか確認すること。
 
 ---
@@ -129,7 +129,7 @@ SELECT * FROM "SyncState";
 
 ## 7. 設定ファイルの修正と反映
 
-### settings.yaml の修正
+### 例）settings.yaml の修正
 
 設定変更がある場合は、以下のファイルを編集してください。
 
@@ -144,7 +144,7 @@ cd ~/nostream
 sudo docker compose restart nostream
 ```
 
-### worker.js の修正
+### 例）worker.js の修正
 
 設定変更がある場合は、以下のファイルを編集してください。
 
@@ -174,7 +174,7 @@ pm2 logs toitoi-worker --lines 30
 node test_relay.js
 
 # リレーへの蓄積確認
-nak req -k <kind番号> wss://relay.your-domain.com | jq .
+nak req -k 1042 wss://relay.your-domain.com | jq .
 
 # APIの疎通確認
 curl https://api.your-domain.com/health
