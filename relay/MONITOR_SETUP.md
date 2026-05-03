@@ -337,7 +337,7 @@ Type=simple
 ExecStart=/usr/local/bin/toitoi-monitor.sh
 Restart=always
 RestartSec=60
-User=root
+User=<your-username>
 StandardOutput=journal
 StandardError=journal
 SyslogIdentifier=toitoi-monitor
@@ -361,6 +361,39 @@ sudo systemctl enable toitoi-monitor
 
 # 監視を開始
 sudo systemctl start toitoi-monitor
+```
+
+---
+
+### Step 3.4: sudo権限の設定（NOPASSWD）
+
+スクリプト内で `docker compose` や `systemctl` コマンドが `sudo` 経由で実行されます。パスワード入力のプロンプトが出ないよう、sudoers ファイルを設定します。
+
+**ユーザーが `<your-username>` の場合：**
+
+```bash
+sudo visudo -f /etc/sudoers.d/toitoi-monitor
+```
+
+以下の行を追加します。`<your-username>` をあなたの実際のユーザー名に置き換えてください。
+
+```sudoers
+# Toitoi Monitor: PM2, Docker, Caddy の操作をパスワード不要で実行可能にする
+<your-username> ALL=(ALL) NOPASSWD: /usr/bin/docker, /usr/bin/docker-compose, /bin/systemctl, /usr/bin/systemctl, /bin/chown
+```
+
+*`Ctrl + O` → `Enter` で保存し、`Ctrl + X` で閉じます。*
+
+設定を確認します（`<your-username>` を実際のユーザー名に置き換えた結果が表示されます）。
+
+```bash
+sudo -l | grep docker
+```
+
+以下のように表示されていれば成功です。
+
+```
+(<your-username>) NOPASSWD: /usr/bin/docker, /usr/bin/docker-compose, /bin/systemctl, /usr/bin/systemctl, /bin/chown
 ```
 
 ---
