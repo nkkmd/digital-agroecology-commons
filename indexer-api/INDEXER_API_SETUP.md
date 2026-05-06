@@ -534,7 +534,7 @@ app.get('/api/v1/inquiries', async (req, res) => {
 // レスポンス:
 //   { total, limit, offset, results: [ { id, pubkey, createdAt,
 //     content, highlight, tags }, ... ] }
-//   highlight: q 指定時、マッチ箇所を ... で囲んだスニペット
+//   highlight: q 指定時、マッチ箇所を <em>...</em> で囲んだスニペット
 // ──────────────────────────────────────────────────
 app.get('/api/v1/inquiries/query', async (req, res) => {
     try {
@@ -648,7 +648,7 @@ app.get('/api/v1/inquiries/query', async (req, res) => {
         // 5. DSL フィルタリング（ARCHITECTURE.md v0.3.0 §2.3 / TOITOI_PROTOCOL_SCHEMA §2.6 準拠）
         //
         //    【dsl_model】
-        //    tagKey='dsl:model' かつ tagValue2= を持つイベントを絞り込む。
+        //    tagKey='dsl:model' かつ tagValue2=<name> を持つイベントを絞り込む。
         //    （tagValue1=model_id, tagValue2=モデル名 で格納されている）
         if (dsl_model) {
             conditions.push(`
