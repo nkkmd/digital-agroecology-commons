@@ -1,5 +1,11 @@
 # Toitoi Commons API リファレンス
-**バージョン：v0.1.0** ｜ *デジタル・アグロエコロジー・コモンズ推進プロジェクト*
+**バージョン：v0.2.0** ｜ *デジタル・アグロエコロジー・コモンズ推進プロジェクト*
+
+前バージョン (v0.1.0) からの主な更新：
+* **`/api/v1/inquiries/query`**: ARCHITECTURE.md v0.3.0 / TOITOI_PROTOCOL_SCHEMA.md v0.1.2 で導入された **問いの二層構造（DSL層）** に対応。クエリパラメータに `dsl_model` / `dsl_var` / `dsl_role` を追加しました。
+* **推奨語彙**: `dsl:*` タグの標準語彙（DSLサブキー・変数ロール）テーブルを新規追加しました。
+* **タグの読み方**: `dsl:*` タグの格納方式と読み取りルールを追記しました。
+* **よくある質問**: DSLフィルタリングに関するQ&Aを追加しました。
 
 ---
 
@@ -29,7 +35,7 @@ https://api.your-domain.com
 |---|---|---|
 | `GET` | `/health` | サーバーの稼働確認 |
 | `GET` | `/api/v1/inquiries` | 最新の問い一覧を取得 |
-| `GET` | `/api/v1/inquiries/query` | 全文検索・タグ絞り込みによる複合検索 |
+| `GET` | `/api/v1/inquiries/query` | 全文検索・タグ絞り込み・DSLフィルタリングによる複合検索 |
 | `GET` | `/api/v1/inquiries/:id/tree` | 問いの系譜ツリーを取得 |
 
 ---
@@ -108,7 +114,14 @@ curl "https://api.your-domain.com/api/v1/inquiries?limit=50"
         { "id": 2, "eventId": "abc123...", "tagKey": "context",      "tagValue1": "climate_zone", "tagValue2": "cool-temperate" },
         { "id": 3, "eventId": "abc123...", "tagKey": "context",      "tagValue1": "soil_type",    "tagValue2": "volcanic_ash" },
         { "id": 4, "eventId": "abc123...", "tagKey": "relationship", "tagValue1": "microclimate", "tagValue2": "weed_flora" },
-        { "id": 5, "eventId": "abc123...", "tagKey": "phase",        "tagValue1": "intermediate", "tagValue2": null }
+        { "id": 5, "eventId": "abc123...", "tagKey": "phase",        "tagValue1": "intermediate", "tagValue2": null },
+        { "id": 6, "eventId": "abc123...", "tagKey": "dsl:model",    "tagValue1": "m1",           "tagValue2": "climate_model" },
+        { "id": 7, "eventId": "abc123...", "tagKey": "dsl:var",      "tagValue1": "m1",           "tagValue2": "microclimate" },
+        { "id": 8, "eventId": "abc123...", "tagKey": "dsl:var",      "tagValue1": "m1",           "tagValue2": "independent" },
+        { "id": 9, "eventId": "abc123...", "tagKey": "dsl:var",      "tagValue1": "m1",           "tagValue2": "weed_flora" },
+        { "id": 10,"eventId": "abc123...", "tagKey": "dsl:var",      "tagValue1": "m1",           "tagValue2": "dependent" },
+        { "id": 11,"eventId": "abc123...", "tagKey": "dsl:rel",      "tagValue1": "m1",           "tagValue2": "microclimate" },
+        { "id": 12,"eventId": "abc123...", "tagKey": "dsl:rel",      "tagValue1": "m1",           "tagValue2": "weed_flora" }
       ]
     }
   ]
@@ -133,15 +146,15 @@ curl "https://api.your-domain.com/api/v1/inquiries?limit=50"
 
 | フィールド | 型 | 説明 |
 |---|---|---|
-| `tagKey` | string | タグの種別（`context` / `relationship` / `phase` / `trigger` / `e` など） |
-| `tagValue1` | string | タグの第1値（tagKey が `context` なら分類キー、`relationship` なら要素Aなど） |
-| `tagValue2` | string \| null | タグの第2値（tagKey が `context` なら値、`relationship` なら要素Bなど） |
+| `tagKey` | string | タグの種別（`context` / `relationship` / `phase` / `trigger` / `e` / `dsl:model` / `dsl:var` / `dsl:rel` / `dsl:meta` など） |
+| `tagValue1` | string | タグの第1値。`context` なら分類キー、`dsl:*` なら `model_id` |
+| `tagValue2` | string \| null | タグの第2値。`context` なら値、`dsl:*` なら変数名・モデル名・役割など（「タグの読み方」参照） |
 
 ---
 
 ### `GET /api/v1/inquiries/query`
 
-問いの本文（`content`）に対する**全文検索**と、`context`・`relationship`・`phase` タグによる**絞り込み検索**を1つのエンドポイントで統合しています。パラメータは自由に組み合わせて使用できます。
+問いの本文（`content`）に対する**全文検索**と、`context`・`relationship`・`phase` タグによる**絞り込み検索**、および `dsl:*` タグによる**DSLフィルタリング**を1つのエンドポイントで統合しています。パラメータは自由に組み合わせて使用できます。
 
 > **パラメータを何も指定しない場合は `400 Bad Request` が返ります。** 全件取得には `/api/v1/inquiries` を使用してください。
 
@@ -158,6 +171,9 @@ curl "https://api.your-domain.com/api/v1/inquiries?limit=50"
 | `crop_family` | string | 対象作物群で絞り込みます（推奨語彙は後述） |
 | `relationship` | string | 関係性の要素名を1つ指定します。要素Aと要素Bの順序は問いません |
 | `phase` | string | 熟達フェーズで絞り込みます（`beginner` / `intermediate` / `expert`） |
+| `dsl_model` | string | DSLモデル名で絞り込みます（例: `climate_model`）。指定したモデル名を持つ `dsl:model` タグを含む問いを返します |
+| `dsl_var` | string | DSL変数名で絞り込みます（例: `microclimate`）。`dsl_role` と組み合わせることで「特定の役割を持つ変数」に絞り込めます |
+| `dsl_role` | string | DSL変数ロールで絞り込みます（`independent` / `dependent` / `mediator` / `moderator`）。`dsl_var` と組み合わせると、その変数が特定の役割を持つイベントに絞り込めます。単独で指定した場合は、そのロールを持つすべてのイベントを返します |
 | `since` | integer | この Unix timestamp **以降**に作成された問いに絞り込みます |
 | `until` | integer | この Unix timestamp **以前**に作成された問いに絞り込みます |
 
@@ -170,7 +186,7 @@ curl "https://api.your-domain.com/api/v1/inquiries?limit=50"
 
 #### 推奨語彙
 
-`context` 系パラメータおよび `relationship` には、以下の標準語彙（TOITOI_PROTOCOL_SCHEMA 準拠）を使用してください。
+`context` 系パラメータ・`relationship`・DSL系パラメータには、以下の標準語彙（TOITOI_PROTOCOL_SCHEMA v0.1.2 準拠）を使用してください。
 
 **`climate_zone`（気候帯）**
 
@@ -226,13 +242,36 @@ curl "https://api.your-domain.com/api/v1/inquiries?limit=50"
 | `soil_microbe` | 土壌微生物 |
 | `crop_vitality` | 作物の活力 |
 
+**`dsl_model`（DSLモデル名）**
+
+`dsl:model` タグの `tagValue2` に格納されたモデル名をそのまま指定します。標準語彙としての制限はなく、イベント送信側が定義した名前を使用します。下記は典型的な例です。
+
+| 値の例 | 説明 |
+|---|---|
+| `climate_model` | 気候要因を中心とした解釈モデル |
+| `soil_model` | 土壌要因を中心とした解釈モデル |
+| `nutrient_chain_model` | 養分連鎖を仮説とするモデル |
+
+**`dsl_var`（DSL変数名）**
+
+`relationship` の推奨語彙と同じ要素名が使用されます。また、送信側が独自に定義した変数名も指定できます。
+
+**`dsl_role`（DSL変数ロール）**
+
+| 値 | 説明 |
+|---|---|
+| `independent` | 仮説的な原因変数・説明変数 |
+| `dependent` | 問いの対象となる結果変数・応答変数 |
+| `mediator` | 因果連鎖の中間変数（A → M → B） |
+| `moderator` | 関係性の強さや方向を条件付ける変数 |
+
 #### リクエスト例
 
 ```bash
 # 全文検索のみ
 curl "https://api.your-domain.com/api/v1/inquiries/query?q=スギナ"
 
-# タグ絞り込みのみ（旧 /search 相当）
+# タグ絞り込みのみ
 curl "https://api.your-domain.com/api/v1/inquiries/query?soil_type=volcanic_ash&climate_zone=cool-temperate"
 
 # 全文検索 ＋ 複数タグの組み合わせ
@@ -240,6 +279,18 @@ curl "https://api.your-domain.com/api/v1/inquiries/query?q=スギナ&soil_type=v
 
 # relationship 絞り込み（要素の順序は問わない）
 curl "https://api.your-domain.com/api/v1/inquiries/query?relationship=weed_flora"
+
+# DSL: 特定のモデル名を持つ問いを取得
+curl "https://api.your-domain.com/api/v1/inquiries/query?dsl_model=climate_model"
+
+# DSL: 特定の変数が独立変数として登場する問いを取得
+curl "https://api.your-domain.com/api/v1/inquiries/query?dsl_var=microclimate&dsl_role=independent"
+
+# DSL: 媒介変数（mediator）を含む問いをすべて取得
+curl "https://api.your-domain.com/api/v1/inquiries/query?dsl_role=mediator"
+
+# DSL フィルタ ＋ context タグの組み合わせ
+curl "https://api.your-domain.com/api/v1/inquiries/query?dsl_model=soil_model&soil_type=volcanic_ash"
 
 # 時間範囲フィルタ（2026年1月1日以降）
 curl "https://api.your-domain.com/api/v1/inquiries/query?q=天敵&since=1735689600"
@@ -269,7 +320,14 @@ curl "https://api.your-domain.com/api/v1/inquiries/query"
         { "tagKey": "context",      "tagValue1": "climate_zone", "tagValue2": "cool-temperate" },
         { "tagKey": "context",      "tagValue1": "soil_type",    "tagValue2": "volcanic_ash" },
         { "tagKey": "relationship", "tagValue1": "microclimate", "tagValue2": "weed_flora" },
-        { "tagKey": "phase",        "tagValue1": "intermediate", "tagValue2": null }
+        { "tagKey": "phase",        "tagValue1": "intermediate", "tagValue2": null },
+        { "tagKey": "dsl:model",    "tagValue1": "m1",           "tagValue2": "climate_model" },
+        { "tagKey": "dsl:var",      "tagValue1": "m1",           "tagValue2": "microclimate" },
+        { "tagKey": "dsl:var",      "tagValue1": "m1",           "tagValue2": "independent" },
+        { "tagKey": "dsl:var",      "tagValue1": "m1",           "tagValue2": "weed_flora" },
+        { "tagKey": "dsl:var",      "tagValue1": "m1",           "tagValue2": "dependent" },
+        { "tagKey": "dsl:rel",      "tagValue1": "m1",           "tagValue2": "microclimate" },
+        { "tagKey": "dsl:rel",      "tagValue1": "m1",           "tagValue2": "weed_flora" }
       ]
     }
   ]
@@ -418,6 +476,34 @@ result.results.forEach(item => {
 ```
 
 ```javascript
+// DSL フィルタリング: 特定の変数が特定の役割で登場する問いを取得
+async function searchByDSL({ dslModel, dslVar, dslRole, limit = 20 } = {}) {
+  const params = new URLSearchParams();
+  if (dslModel) params.set('dsl_model', dslModel);
+  if (dslVar)   params.set('dsl_var',   dslVar);
+  if (dslRole)  params.set('dsl_role',  dslRole);
+  params.set('limit', limit);
+
+  const res = await fetch(
+    `https://api.your-domain.com/api/v1/inquiries/query?${params}`
+  );
+  if (!res.ok) throw new Error(`API error: ${res.status}`);
+  return res.json();
+}
+
+// 使用例: microclimate が独立変数として登場する問いを取得
+const dslResult = await searchByDSL({
+  dslVar:  'microclimate',
+  dslRole: 'independent',
+});
+console.log(`${dslResult.total}件ヒット`);
+
+// 使用例: 媒介変数（mediator）を含む問いをすべて取得
+const mediatorResult = await searchByDSL({ dslRole: 'mediator' });
+console.log(`媒介変数を持つ問い: ${mediatorResult.total}件`);
+```
+
+```javascript
 // 問いの系譜ツリーを取得してノード数を数える
 async function fetchTree(eventId) {
   const res = await fetch(
@@ -455,16 +541,30 @@ def search_inquiries(q=None, soil_type=None, phase=None, limit=20, offset=0):
     res.raise_for_status()
     return res.json()
 
+def search_by_dsl(dsl_model=None, dsl_var=None, dsl_role=None, limit=20):
+    params = {"limit": limit}
+    if dsl_model: params["dsl_model"] = dsl_model
+    if dsl_var:   params["dsl_var"]   = dsl_var
+    if dsl_role:  params["dsl_role"]  = dsl_role
+
+    res = requests.get(f"{BASE_URL}/api/v1/inquiries/query", params=params)
+    res.raise_for_status()
+    return res.json()
+
 def fetch_tree(event_id):
     res = requests.get(f"{BASE_URL}/api/v1/inquiries/{event_id}/tree")
     res.raise_for_status()
     return res.json()
 
-# 使用例
+# 使用例: 全文検索
 result = search_inquiries(q="スギナ", soil_type="volcanic_ash")
 print(f"{result['total']}件ヒット")
 for item in result["results"]:
     print(item["content"])
+
+# 使用例: DSL フィルタリング
+dsl_result = search_by_dsl(dsl_var="microclimate", dsl_role="independent")
+print(f"DSLフィルタ: {dsl_result['total']}件ヒット")
 ```
 
 ---
@@ -526,6 +626,34 @@ tagKey = "e"（Lineage）
      本APIのレスポンスでは tagValue2 までを返します。rawJson を参照してください。
 ```
 
+### DSL タグの読み方
+
+`dsl:*` タグは、プロトコルの4要素配列（例: `["dsl:var", "m1", "microclimate", "independent"]`）を、Tag テーブルの2行レコードとして格納しています。レスポンス上では以下のルールで読み取ってください。
+
+```
+tagKey = "dsl:model"
+  → tagValue1: model_id（例: "m1"）
+  → tagValue2: モデル名（例: "climate_model"）
+  ※ 1イベントに複数の dsl:model レコードがある場合、それぞれが異なる解釈モデルを表します
+
+tagKey = "dsl:var"
+  → 変数名レコード: tagValue1 = model_id, tagValue2 = 変数名（例: "microclimate"）
+  → ロールレコード: tagValue1 = model_id, tagValue2 = ロール（"independent" / "dependent" / "mediator" / "moderator"）
+  ※ 変数名とロールは別レコードに分かれています。同一 tagValue1（model_id）を持つ
+     連続する dsl:var レコードをペアとして解釈してください
+
+tagKey = "dsl:rel"
+  → 起点変数レコード: tagValue1 = model_id, tagValue2 = 起点変数名
+  → 終点変数レコード: tagValue1 = model_id, tagValue2 = 終点変数名
+  ※ dsl:var と同様に、同一 model_id を持つ2行でひとつの有向関係（A → B）を表します
+
+tagKey = "dsl:meta"
+  → tagValue1: model_id
+  → tagValue2: キー（モデルレベルの任意メタデータ）
+```
+
+> **完全なイベント構造を確認したい場合：** `rawJson` フィールドに元のNostrイベントがそのまま格納されています。プロトコルの4要素配列の原形は `rawJson.tags` から参照できます。
+
 ---
 
 ## よくある質問
@@ -546,6 +674,14 @@ AND条件として動作します。たとえば `soil_type=volcanic_ash&climate
 
 現バージョンでは `pubkey` によるフィルタリングには対応していません。取得した結果をクライアント側でフィルタリングしてください。
 
+**Q. `dsl_model` と `dsl_var` / `dsl_role` を同時に指定できますか？**
+
+はい。たとえば `dsl_model=climate_model&dsl_var=microclimate&dsl_role=independent` のように組み合わせると、気候モデルの中で `microclimate` が独立変数として現れる問いのみを取得できます。ただし現バージョンでは `dsl_model` と `dsl_var` / `dsl_role` のフィルタは独立した EXISTS クエリとして評価されるため、「同一モデル内での一致」ではなく「それぞれの条件を満たすタグがイベント内に存在する」という判定になります。1つのイベントに複数のDSLモデルが共存する場合（解釈の多様性）にはこの点にご注意ください。
+
+**Q. DSLタグを持たない問いは `/query?dsl_model=...` でヒットしますか？**
+
+ヒットしません。DSLタグは任意（optional）であり（TOITOI_PROTOCOL_SCHEMA §2.6 準拠）、`dsl_model` / `dsl_var` / `dsl_role` の各パラメータは指定したタグを実際に持つイベントのみを返します。DSLタグの有無に関わらず全件を取得したい場合は、これらのパラメータを省略して他のフィルタのみを使用してください。
+
 **Q. `highlight` フィールドの `<em>` タグはCSSでどう装飾しますか？**
 
 ```css
@@ -559,4 +695,4 @@ em {
 ---
 
 *本ドキュメントはデジタル・アグロエコロジー・コモンズ推進プロジェクトの一環として作成されました。*
-*v0.1.0 — 2026年5月*
+*v0.2.0 — 2026年5月*
