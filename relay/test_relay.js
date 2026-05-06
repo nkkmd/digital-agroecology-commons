@@ -119,12 +119,32 @@ function validateDslTags(tags) {
     return { ok: errors.length === 0, errors };
 }
 
+function normalizeTestEvent(template) {
+    const event = {
+        ...template,
+        tags: Array.isArray(template.tags) ? [...template.tags] : [],
+        content: typeof template.content === 'string' ? template.content : '',
+    };
+
+    if (!event.tags.some(t => Array.isArray(t) && t[0] === 'test')) {
+        event.tags.push(['test', 'true']);
+    }
+
+    if (typeof event.content === 'string' && !event.content.includes('[TEST]')) {
+        event.content = `[TEST] ${event.content}`;
+    }
+
+    return event;
+}
+
 // ── イベント送信ヘルパー ──────────────────────────────────────
 // expectSuccess=true  → publish が成功すれば PASS
 // expectSuccess=false → DSL バリデーション拒否 or リレー拒否されれば PASS
 async function publishTest(relay, sk, label, eventTemplate, expectSuccess = true) {
+    const eventTemplateWithMarker = normalizeTestEvent(eventTemplate);
+
     // DSL タグをローカルバリデーション（送信前チェック）
-    const dslResult = validateDslTags(eventTemplate.tags ?? []);
+    const dslResult = validateDslTags(eventTemplateWithMarker.tags ?? []);
     if (!dslResult.ok) {
         if (expectSuccess) {
             fail(label, `DSL バリデーションエラー:\n  ${dslResult.errors.join('\n  ')}`);
