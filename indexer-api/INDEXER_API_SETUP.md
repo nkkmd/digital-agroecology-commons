@@ -89,8 +89,6 @@ nano docker-compose.yml
       start_period: 360s
 ```
 
-> **注意：** `networks:` の後ろにコロン（`:`）が必要です。元のファイルにtypoがある場合は合わせて修正してください。
-
 設定を反映するためにNostreamを再起動します。
 
 ```bash
