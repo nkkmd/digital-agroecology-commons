@@ -1,5 +1,5 @@
 // test_relay.js
-// Toitoi プロトコル・スキーマ v1.2 対応リレー送信テストスクリプト
+// Toitoi プロトコル・スキーマ v0.1.2 対応リレー送信テストスクリプト
 //
 // 使用法:
 //   node test_relay.js
@@ -24,7 +24,7 @@ const WebSocket = require('ws');
 global.WebSocket = WebSocket;
 
 // ── 設定 ─────────────────────────────────────────────────────
-const RELAY_URL = process.env.RELAY_URL ?? 'wss://relay.toitoi.cultivationdata.net';
+const RELAY_URL = process.env.RELAY_URL ?? 'wss://new-relay.your-domain.com';
 
 // ── テスト結果カウンター ───────────────────────────────────────
 let passCount = 0;
@@ -47,7 +47,7 @@ function section(title) {
 }
 
 // ── DSL タグのローカルバリデーション ──────────────────────────
-// リレーに送信する前に v1.2 スキーマ仕様に照らして構造を検証する。
+// リレーに送信する前に v0.1.2 スキーマ仕様に照らして構造を検証する。
 // 返り値: { ok: boolean, errors: string[] }
 function validateDslTags(tags) {
     const errors = [];
@@ -158,7 +158,7 @@ async function publishTest(relay, sk, label, eventTemplate, expectSuccess = true
 async function test() {
     console.log('');
     console.log('╔══════════════════════════════════════════════════════════╗');
-    console.log('║  Toitoi test_relay.js  —  Protocol Schema v1.2          ║');
+    console.log('║  Toitoi test_relay.js  —  Protocol Schema v0.1.2          ║');
     console.log(`║  接続先: ${RELAY_URL.slice(0, 48).padEnd(48)}║`);
     console.log('╚══════════════════════════════════════════════════════════╝');
 
