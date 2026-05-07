@@ -26,7 +26,7 @@ pm2 stop toitoi-worker toitoi-api
 
 # Nostreamを停止
 cd ~/nostream
-sudo docker compose down
+sudo docker compose down -v
 ```
 
 ---
@@ -35,8 +35,15 @@ sudo docker compose down
 
 ```
 # リレーおよびインデクサーが使用するDBデータを削除
-sudo rm -rf ~/nostream/.nostr/data/*
-sudo rm -rf ~/nostream/.nostr/db-logs/*
+sudo rm -rf ~/nostream/.nostr/data
+sudo rm -rf ~/nostream/.nostr/db-logs
+
+mkdir -p ~/nostream/.nostr/data
+mkdir -p ~/nostream/.nostr/db-logs
+
+# PostgreSQL用に権限を設定
+sudo chown -R 999:999 ~/nostream/.nostr/data
+sudo chown -R 999:999 ~/nostream/.nostr/db-logs
 ```
 
 ---
