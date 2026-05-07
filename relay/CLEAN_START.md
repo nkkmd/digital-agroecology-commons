@@ -79,8 +79,6 @@ sudo docker exec -it nostream-db psql -U nostr_ts_relay -d postgres
 PostgreSQLのプロンプト（`postgres=#`）が表示されたら、以下を実行します。
 
 ```
-DROP DATABASE IF EXISTS toitoi_db;
-DROP USER IF EXISTS toitoi_user;
 CREATE USER toitoi_user WITH PASSWORD 'your_secure_password';
 CREATE DATABASE toitoi_db OWNER toitoi_user TEMPLATE template0;
 GRANT ALL PRIVILEGES ON DATABASE toitoi_db TO toitoi_user;
