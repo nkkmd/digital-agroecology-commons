@@ -119,9 +119,14 @@ function validateDslTags(tags) {
     return { ok: errors.length === 0, errors };
 }
 
+// ── イベントシーケンス番号（created_at の秒衝突を防ぐ） ───────
+let eventSeq = 0;
+
 function normalizeTestEvent(template) {
     const event = {
         ...template,
+        // FIX: created_at にシーケンス番号を加算して同一秒内の id 衝突を防ぐ
+        created_at: (template.created_at ?? Math.floor(Date.now() / 1000)) + (eventSeq++),
         tags: Array.isArray(template.tags) ? [...template.tags] : [],
         content: typeof template.content === 'string' ? template.content : '',
     };
@@ -154,7 +159,10 @@ async function publishTest(relay, sk, label, eventTemplate, expectSuccess = true
         return null;
     }
 
-    const event = finalizeEvent(eventTemplate, sk);
+    // FIX: eventTemplate → eventTemplateWithMarker
+    // 修正前は素の eventTemplate（['test','true'] タグ・[TEST] プレフィックスなし）が
+    // finalizeEvent に渡されており、normalizeTestEvent の変更が署名に反映されていなかった。
+    const event = finalizeEvent(eventTemplateWithMarker, sk);
 
     try {
         await relay.publish(event);
