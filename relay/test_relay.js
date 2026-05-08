@@ -182,6 +182,9 @@ function markTestEvent(template) {
  * @returns {object|null} 送信に成功した場合は finalizeEvent の返り値、失敗時は null
  */
 async function publishTest(relay, sk, label, template, expectSuccess = true) {
+    // レートリミット対策: 接続単位 48msg/分 を安全に下回るよう待機
+    await new Promise(r => setTimeout(r, 1500));
+
     const normalized = markTestEvent(template);
 
     // ─ ローカル DSL バリデーション ─
@@ -1315,21 +1318,16 @@ async function testPayloadSize(relay, sk) {
         skip('10 モデル DSL', '20 KB を超過（上限テスト対象外）');
     }
 
-    // 10-2: 20 KB をわずかに超えるペイロード → 拒否
-    //        content に大量の文字を詰めて 20 KB 超えを意図的に作る
+    // 10-2: maxLength: 20480B を超えるペイロードはリレーに拒否されるべき
     const baseTagsForOversize = [
         ['t', 'agroecology'],
         ['context',      'climate_zone', 'warm-temperate'],
         ['relationship', 'microclimate', 'weed_flora'],
         ['phase',        'intermediate'],
+        ['test', 'true'],
     ];
-    // 20 KB をわずかに超えるような content を生成
-    const overhead = Buffer.byteLength(JSON.stringify({
-        kind: 1042, created_at: now(), tags: baseTagsForOversize, content: '',
-    }), 'utf8');
-    const targetBytes = 20 * 1024 + 100; // 20 KB + 100 B
-    const fillerLen   = targetBytes - overhead;
-    const overContent = '農' .repeat(Math.ceil(fillerLen / 3)).slice(0, Math.ceil(fillerLen / 3));
+    // maxLength のバイト数制限（20480B）を超えるように content を生成
+    const overContent = 'a'.repeat(20480 + 100);
 
     const oversizeTemplate = {
         kind: 1042,
@@ -1337,17 +1335,17 @@ async function testPayloadSize(relay, sk) {
         tags: baseTagsForOversize,
         content: overContent,
     };
-    const kbOver = Buffer.byteLength(JSON.stringify(oversizeTemplate), 'utf8') / 1024;
-    console.log(`  ℹ️  超過ペイロード: ${kbOver.toFixed(2)} KB（20 KB 超え → リレーに拒否されるべき）`);
+    const contentBytes = Buffer.byteLength(overContent, 'utf8');
+    console.log(`  ℹ️  超過ペイロード: content ${(contentBytes / 1024).toFixed(2)} KB（maxLength 20480B 超え → リレーに拒否されるべき）`);
 
-    if (kbOver >= 20) {
+    if (contentBytes > 20480) {
         await publishTest(relay, sk,
-            `${kbOver.toFixed(2)} KB ペイロード → リレーに拒否（上限 20 KB）`,
+            `content ${(contentBytes / 1024).toFixed(2)} KB → リレーに拒否（maxLength 20480B）`,
             oversizeTemplate,
             false
         );
     } else {
-        skip('20 KB 超過テスト', '計算が 20 KB に届かなかった（スキップ）');
+        skip('20480B 超過テスト', '計算が 20480B に届かなかった（スキップ）');
     }
 }
 
