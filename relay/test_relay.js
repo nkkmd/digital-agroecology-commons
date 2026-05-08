@@ -33,7 +33,7 @@ global.WebSocket = WebSocket;
 // 設定
 // ═══════════════════════════════════════════════════════════════
 
-const RELAY_URL  = process.env.RELAY_URL  ?? 'wss://relay.toitoi.cultivationdata.net';
+const RELAY_URL  = process.env.RELAY_URL  ?? 'wss://new-relay.your-domain.com';
 const SKIP_NIP11 = process.env.SKIP_NIP11 === '1';
 
 // wss:// → https:// に変換（NIP-11 確認用）
