@@ -655,12 +655,13 @@ echo "✅ インポート完了"
 ### アーカイブディレクトリの構成（完成イメージ）
 
 ```text
-~/nostr-archive/agroecology-commons/
-├── .git/                    # Gitリポジトリ（問いの系譜の歴史）
-├── .gitignore
-├── questions.jsonl          # 全イベントの蓄積（1行＝1問い）
-├── archive.log              # 実行ログ
-└── archive_diff.sh          # 差分アーカイブスクリプト
+~/nostr-archive/
+├── archive_diff.sh                  # 差分アーカイブスクリプト
+└── agroecology-commons/
+    ├── .git/                        # Gitリポジトリ（問いの系譜の歴史）
+    ├── .gitignore
+    ├── questions.jsonl              # 全イベントの蓄積（1行＝1問い）
+    └── archive.log                  # 実行ログ
 ```
 
 `git log` を実行すると、コミットメッセージが「問いの系譜」の年表になります。
@@ -808,15 +809,16 @@ git log --oneline -5
 #### 分割後のディレクトリ構成
 
 ```text
-~/nostr-archive/agroecology-commons/
-├── .git/
-├── .gitignore
-├── questions_2026.jsonl   # 分割済みアーカイブ
-├── questions_2027.jsonl
-├── questions_2028.jsonl   # archive_diff.sh が追記する現在年ファイル
-├── archive.log
-├── archive_diff.sh        # ARCHIVE_FILE が自動更新済み
-└── split_archive.sh       # 本Stepで作成
+~/nostr-archive/
+├── archive_diff.sh                  # ARCHIVE_FILE が自動更新済み
+├── split_archive.sh                 # 本Stepで作成
+└── agroecology-commons/
+    ├── .git/
+    ├── .gitignore
+    ├── questions_2026.jsonl         # 分割済みアーカイブ
+    ├── questions_2027.jsonl
+    ├── questions_2028.jsonl         # archive_diff.sh が追記する現在年ファイル（例）
+    └── archive.log
 ```
 
 #### 分割後の復元コマンド（Step 6.7 の変更点）
