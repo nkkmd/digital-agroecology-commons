@@ -203,6 +203,8 @@ To overcome the dilemma of locality while generating searchable "weak ties," tag
 
 **Relationship elements:** `soil_moisture`, `weed_flora`, `pest`, `natural_enemy`, `microclimate`, `nutrient_cycle`, `soil_physical`, `soil_microbe`, `crop_vitality`
 
+> For the complete vocabulary list including extended `crop_family` entries, normalization guidelines, and provisional naming rules for unlisted plant families, see **[`TOITOI_VOCABULARY.md`](./TOITOI_VOCABULARY.md)**.
+
 **DSL sub-keys** (Layer 2):
 
 | sub_key | Meaning | tagValue1 | tagValue2 |
@@ -435,6 +437,9 @@ Operational policies to maintain Ostrom's "Design principles for Common Pool Res
 *   **`crop_family`:** `solanaceae` (ナス科), `brassica` (アブラナ科), `legume` (マメ科), `cucurbitaceae` (ウリ科), `poaceae` (イネ科)
 
 **Relationship 要素群:** `soil_moisture` (土壌水分), `weed_flora` (雑草相), `pest` (害虫), `natural_enemy` (天敵), `microclimate` (微気候), `nutrient_cycle` (養分循環), `soil_physical` (土壌物理性), `soil_microbe` (土壌微生物), `crop_vitality` (作物の活力)
+
+> `crop_family` の拡張語彙・語彙正規化ガイドライン・未掲載の植物科への暫定命名規則については、**[`TOITOI_VOCABULARY.md`](./TOITOI_VOCABULARY.md)** を参照してください。
+
 
 **DSL サブキー**（第2層）:
 
