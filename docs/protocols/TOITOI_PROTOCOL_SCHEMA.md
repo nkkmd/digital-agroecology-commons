@@ -41,7 +41,7 @@ The system continues to describe agroecological knowledge in its established fou
 
 ## 2. Deep Reference and Standard Vocabulary of the Tag Structure
 
-> **Standard Vocabulary Reference:** For the complete controlled vocabulary list, normalization guidelines, and crop family naming conventions, see **[`TOITOI_VOCABULARY.md`](./TOITOI_VOCABULARY.md)**.
+> **Standard Vocabulary Reference:** For the complete controlled vocabulary list, normalization guidelines, and crop family naming conventions, see **[`TOITOI_VOCABULARY.md`](../concepts/TOITOI_VOCABULARY.md)**.
 
 ### 2.1 `context` (Metadata of Locality)
 
@@ -279,7 +279,7 @@ New sub-keys introduced via TIPs will not break existing implementations, as the
 
 ## 4. Future Vocabulary Extensibility (TIPs)
 
-The vocabulary defined in this document is for the initial version (v1.0) and is maintained as a standalone reference in **[`TOITOI_VOCABULARY.md`](./TOITOI_VOCABULARY.md)** (v0.1.0). As the system operates, unknown relationships and new contexts will be required.
+The vocabulary defined in this document is for the initial version (v1.0) and is maintained as a standalone reference in **[`TOITOI_VOCABULARY.md`](../concepts/TOITOI_VOCABULARY.md)** (v0.1.0). As the system operates, unknown relationships and new contexts will be required.
 
 The Toitoi project envisions a protocol governance where the vocabulary is expanded by the community, rather than dictated exclusively by a central administrator.
 
@@ -333,7 +333,7 @@ The Toitoi project envisions a protocol governance where the vocabulary is expan
 
 ## 2. タグ構造のディープ・リファレンスと標準語彙
 
-> **標準語彙リファレンス：** 完全な管理語彙リスト・語彙正規化ガイドライン・`crop_family` 命名規則については、**[`TOITOI_VOCABULARY.md`](./TOITOI_VOCABULARY.md)** を参照してください。
+> **標準語彙リファレンス：** 完全な管理語彙リスト・語彙正規化ガイドライン・`crop_family` 命名規則については、**[`TOITOI_VOCABULARY.md`](../concepts/TOITOI_VOCABULARY.md)** を参照してください。
 
 ### 2.1 `context`（属地性のメタデータ）
 
@@ -528,7 +528,7 @@ TIPs経由で導入された新サブキーは、インデクサーが未知のt
 
 ## 4. 今後のボキャブラリー拡張性（TIPs）
 
-本ドキュメントで定義した語彙は初期バージョン（v1.0）のものであり、スタンドアロンのリファレンスとして **[`TOITOI_VOCABULARY.md`](./TOITOI_VOCABULARY.md)**（v0.1.0）に集約・整理されています。
+本ドキュメントで定義した語彙は初期バージョン（v1.0）のものであり、スタンドアロンのリファレンスとして **[`TOITOI_VOCABULARY.md`](../concepts/TOITOI_VOCABULARY.md)**（v0.1.0）に集約・整理されています。
 
 Toitoiプロジェクトでは、中央管理者が語彙を独占的に決定するのではなく、コミュニティ主導で語彙を拡張するプロトコル・ガバナンスを想定しています。
 

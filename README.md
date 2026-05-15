@@ -8,11 +8,11 @@
 
 *[日本語は下に続きます]*
 
-Toitoi is a **decentralized protocol platform (digital commons)** designed to share and evolve agroecological knowledge, based on the philosophy of "[Letting Go of Technology in Agriculture](./Letting-Go-of-Technology-in-Agriculture.md)".
+Toitoi is a **decentralized protocol platform (digital commons)** designed to share and evolve agroecological knowledge, based on the philosophy of "[Letting Go of Technology in Agriculture](./docs/essays/letting-go-of-technology-in-agriculture.md)".
 
 Instead of depending on specific companies or centralized servers, it circulates farmers' "ecological intuition (tacit knowledge)" across the network in the form of "inquiries (questions)" that can be translated and adapted by others.
 
-> **Note:** Toitoi is an experimental project that aims to implement, as actual open-source software, the "inquiry circulation system" conceived within the essay *[Letting Go of Technology in Agriculture](./Letting-Go-of-Technology-in-Agriculture.md)*. It is as much a living proof-of-concept for the ideas in that text as it is a piece of software.
+> **Note:** Toitoi is an experimental project that aims to implement, as actual open-source software, the "inquiry circulation system" conceived within the essay *[Letting Go of Technology in Agriculture](./docs/essays/letting-go-of-technology-in-agriculture.md)*. It is as much a living proof-of-concept for the ideas in that text as it is a piece of software.
 
 ## 💡 Project Philosophy: Why Toitoi?
 
@@ -48,23 +48,38 @@ Toitoi is a "nested commons" composed of 3 modules connected through a common pr
 * **[Infrastructure Layer] Commons Relay**: A decentralized relay network that permanently archives only "inquiries".
 * **[Viewer Layer] Indexer & UI**: Collects distributed inquiries and visualizes them as a mind map.
 
+In the long term, Toitoi aims to preserve knowledge archives through a protocol-independent canonical event structure.
+
+Nostr is currently treated as the first operational transport layer.
+
 ## 📚 Documentation
 
 Please refer to the following directories for the overall picture of the project, specifications, and setup guides for each module. *(Note: Currently, most detailed docs are written in Japanese.)*
 
 ### Core Documents
-* 🏛️ **[Architecture Design](./ARCHITECTURE.md)**
-* 📜 **[Toitoi Protocol Schema (Boundary Object Definition)](./TOITOI_PROTOCOL_SCHEMA.md)**
-* 📖 **[Standard Vocabulary List](./TOITOI_VOCABULARY.md)**
+
+* 🏛️ **[Architecture Overview](./docs/architecture/OVERVIEW.md)**
+* 📜 **[Event Model](./docs/architecture/EVENT_MODEL.md)**
+* 🔌 **[Protocol Abstraction](./docs/architecture/PROTOCOL_ABSTRACTION.md)**
+* 📦 **[Canonical JSONL](./docs/protocols/CANONICAL_JSONL.md)**
+* 📖 **[Standard Vocabulary List](./docs/concepts/TOITOI_VOCABULARY.md)**
 * ⚖️ **[License Policy](./LICENSE_POLICY.md)**
 
+### Essays & Background
+
+* 🌱 **[Letting Go of Technology in Agriculture](./docs/essays/letting-go-of-technology-in-agriculture.md)**
+* 🌾 **[テクノロジーを手放す農業論](./docs/essays/tech-wo-tebanasu-nogyoron.md)**
+
 ### Module Setup & Design
+
 * 🌐 **Commons Relay Layer**: **[`/relay/NOSTR_RELAY_SETUP.md`](./relay/NOSTR_RELAY_SETUP.md)**
 * 🤖 **Local AI Edge Layer**: **[`/edge-ai/EDGE_AI_SETUP.md`](./edge-ai/EDGE_AI_SETUP.md)**
+* 🧠 **AI System Overview**: **[`/docs/architecture/AI_SYSTEM_OVERVIEW.md`](./docs/architecture/AI_SYSTEM_OVERVIEW.md)**
 * ⚙️ **Indexer API Layer**: **[`/indexer-api/INDEXER_API_SETUP.md`](./indexer-api/INDEXER_API_SETUP.md)**
 * 📱 **Frontend UI Layer**: **[`/frontend/FRONTEND_UX_DESIGN.md`](./frontend/FRONTEND_UX_DESIGN.md)**
 
 ## 🟢 Live Endpoints
+
 * **Relay server**: `wss://relay.toitoi.cultivationdata.net`
 * **API**: `https://api.toitoi.cultivationdata.net`
 
@@ -73,13 +88,18 @@ Please refer to the following directories for the overall picture of the project
 ## 🤝 Contribution & Community
 
 Toitoi is not just software; it is a "protocol" and a "commons."
-We welcome all forms of participation: proposing new relationship tags (TIPs), hosting a relay server, improving local AI prompts, or developing the frontend. See [`CONTRIBUTING.md`](./CONTRIBUTING.md) for details.
+
+We welcome all forms of participation: proposing new relationship tags (TIPs), hosting a relay server, improving local AI prompts, or developing the frontend.
+
+See [`CONTRIBUTING.md`](./CONTRIBUTING.md) for details.
 
 > *"Using technology to let go of technology. Bringing theory as the foundation of muddy practice to farmlands worldwide."*
 
 ## ⚖️ License
 
-To balance the defense of the commons with the expansion of the ecosystem, the Toitoi project adopts different open-source licenses for different modules. Please see [LICENSE_POLICY.md](./LICENSE_POLICY.md) for details.
+To balance the defense of the commons with the expansion of the ecosystem, the Toitoi project adopts different open-source licenses for different modules.
+
+Please see [LICENSE_POLICY.md](./LICENSE_POLICY.md) for details.
 
 * **Relay & Indexer (Infrastructure):** [GNU AGPLv3](./LICENSE-AGPL)
 * **Frontend & Edge Client:** [MIT License](./LICENSE-MIT)
@@ -91,11 +111,11 @@ To balance the defense of the commons with the expansion of the ecosystem, the T
 
 **Digital Agroecology Commons powered by Nostr Protocol**
 
-Toitoi（トイトイ）は、『[テクノロジーを手放す農業論](./Tech-wo-Tebanasu-Nogyoron.md)』の思想に基づき、アグロエコロジーの知を共有・進化させるための **分散型プロトコル・プラットフォーム（デジタル・コモンズ）** です。
+Toitoi（トイトイ）は、『[テクノロジーを手放す農業論](./docs/essays/tech-wo-tebanasu-nogyoron.md)』の思想に基づき、アグロエコロジーの知を共有・進化させるための **分散型プロトコル・プラットフォーム（デジタル・コモンズ）** です。
 
 特定の企業や中央サーバーに依存せず、農家の「生態学的直感（暗黙知）」を、他者が翻訳可能な『問いの形式』としてネットワーク上で循環させます。
 
-> **本プロジェクトについて：** Toitoiは、論考『[テクノロジーを手放す農業論](./Tech-wo-Tebanasu-Nogyoron.md)』のなかで構想した「問いの循環システム」を、実際のOSSとして実装することを目指した実験的プロジェクトです。ソフトウェアであると同時に、あの論考で提示した思想の「泥臭い実証」そのものでもあります。
+> **本プロジェクトについて：** Toitoiは、論考『[テクノロジーを手放す農業論](./docs/essays/tech-wo-tebanasu-nogyoron.md)』のなかで構想した「問いの循環システム」を、実際のOSSとして実装することを目指した実験的プロジェクトです。ソフトウェアであると同時に、あの論考で提示した思想の「泥臭い実証」そのものでもあります。
 
 ## 💡 プロジェクトの思想：なぜToitoiなのか？
 
@@ -128,8 +148,10 @@ Toitoiは、この構造を根底から覆します。
 
 1. **「答え」ではなく「問い」を循環させる**
    農地に固有の生データは絶対に外部に出しません。ローカルAIがデータから「生態学的関係性への問い（例：微気候と雑草相の関係）」を抽出し、それのみをネットワークに放ちます。
+
 2. **属地性のジレンマの克服**
    「バウンダリー・オブジェクト（境界対象）」として定義された共通フォーマットにより、気候や土壌が異なる他地域の農家同士が、互いの文脈を破壊することなく「弱い連帯」で結びつきます。
+
 3. **進化の系統樹の可視化**
    ある問いが他の農地に翻訳され、別の問いと結びつく「翻訳的共進化（アクター・ネットワーク）」の過程を、グラフィカルな系統樹として記録・可視化します。
 
@@ -141,31 +163,38 @@ Toitoiは、Nostrを基盤とした共通プロトコルによって接続され
 * **[インフラ層] コモンズ・リレー**: 「問い」だけを永続的にアーカイブする分散リレー網。
 * **[ビューア層] インデクサー＆UI**: 分散する問いを収集し、マインドマップとして可視化する。
 
+長期的には、Toitoi は protocol-independent な canonical event structure を通じて、知識アーカイブを保存することを目指しています。
+
+現在、Nostr は最初の operational transport layer として扱われています。
+
 ## 📚 ドキュメント (Documentation)
 
 本プロジェクトの全体像と、各モジュールの仕様書・構築ガイドは以下のディレクトリを参照してください。
 
 ### コア・ドキュメント (Core Documents)
-* 🏛️ **[システムアーキテクチャ詳細設計書](./ARCHITECTURE.md)**
-  * データフローと全モジュールの連携の仕組み
-* 📜 **[Toitoi プロトコル・スキーマ仕様書](./TOITOI_PROTOCOL_SCHEMA.md)**
-  * 「問い（Kind: 1042）」のNostrイベント構造と標準語彙（ボキャブラリー）定義
-* 📖 **[標準語彙リスト](./TOITOI_VOCABULARY.md)**
-  * `context`・`relationship`・DSL タグの標準語彙（暫定 v0.1.0）
+
+* 🏛️ **[Architecture Overview](./docs/architecture/OVERVIEW.md)**
+* 📜 **[Event Model](./docs/architecture/EVENT_MODEL.md)**
+* 🔌 **[Protocol Abstraction](./docs/architecture/PROTOCOL_ABSTRACTION.md)**
+* 📦 **[Canonical JSONL](./docs/protocols/CANONICAL_JSONL.md)**
+* 📖 **[標準語彙リスト](./docs/concepts/TOITOI_VOCABULARY.md)**
 * ⚖️ **[ライセンス・ポリシー](./LICENSE_POLICY.md)**
-  * 知識の囲い込みを防ぐためのデュアルライセンス戦略について
+
+### 論考・背景思想 (Essays & Background)
+
+* 🌱 **[Letting Go of Technology in Agriculture](./docs/essays/letting-go-of-technology-in-agriculture.md)**
+* 🌾 **[テクノロジーを手放す農業論](./docs/essays/tech-wo-tebanasu-nogyoron.md)**
 
 ### モジュール別セットアップ・設計書 (Modules)
+
 * 🌐 **コモンズ・リレー層**: **[`/relay/NOSTR_RELAY_SETUP.md`](./relay/NOSTR_RELAY_SETUP.md)**
-  * 専用リレーサーバーの構築手順と、Gitを用いた永続的アーカイブの仕組み
 * 🤖 **ローカルAI・エッジ層**: **[`/edge-ai/EDGE_AI_SETUP.md`](./edge-ai/EDGE_AI_SETUP.md)**
-  * ローカル環境でのデータ秘匿、AIによる「問い」の生成と署名・送信の実装ガイド
+* 🧠 **AIシステム概要**: **[`/docs/architecture/AI_SYSTEM_OVERVIEW.md`](./docs/architecture/AI_SYSTEM_OVERVIEW.md)**
 * ⚙️ **インデクサー・API層**: **[`/indexer-api/INDEXER_API_SETUP.md`](./indexer-api/INDEXER_API_SETUP.md)**
-  * リレーからのデータ収集と、系統樹（ツリー）を構築するAPIサーバーの設計
 * 📱 **フロントエンド・UI層**: **[`/frontend/FRONTEND_UX_DESIGN.md`](./frontend/FRONTEND_UX_DESIGN.md)**
-  * 生態学的直感を刺激し、進化の系統樹を描画するUI/UX設計思想
 
 ## 🟢 現在稼働中のサーバー
+
 * **リレーサーバー**: `wss://relay.toitoi.cultivationdata.net`
 * **API**: `https://api.toitoi.cultivationdata.net`
 
@@ -174,13 +203,18 @@ Toitoiは、Nostrを基盤とした共通プロトコルによって接続され
 ## 🤝 コントリビューションとコミュニティ
 
 Toitoiは、単なるソフトウェアではなく「プロトコル」であり「コモンズ」です。
+
 新しい関係性タグの提案（TIPs）、リレーサーバーの立ち上げ、ローカルAI用プロンプトの改善、フロントエンドの開発など、あらゆる形での参加を歓迎します。
+
+詳細は [`CONTRIBUTING.md`](./CONTRIBUTING.md) を参照してください。
 
 > *"テクノロジーを使って、テクノロジーを手放す。泥臭い実践の土台としての理論を、世界中の農地へ。"*
 
 ## ⚖️ License
 
-Toitoiプロジェクトは、コモンズの防衛とエコシステムの拡大を両立させるため、モジュールごとに異なるオープンソースライセンスを採用しています。詳細は [LICENSE_POLICY.md](./LICENSE_POLICY.md) を確認してください。
+Toitoiプロジェクトは、コモンズの防衛とエコシステムの拡大を両立させるため、モジュールごとに異なるオープンソースライセンスを採用しています。
+
+詳細は [LICENSE_POLICY.md](./LICENSE_POLICY.md) を確認してください。
 
 * **Relay & Indexer (Infrastructure):** [GNU AGPLv3](./LICENSE-AGPL)
 * **Frontend & Edge Client:** [MIT License](./LICENSE-MIT)
