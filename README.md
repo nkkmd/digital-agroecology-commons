@@ -16,7 +16,20 @@ Instead of depending on specific companies or centralized servers, it circulates
 
 ## 💡 Project Philosophy: Why Toitoi?
 
-Modern smart agriculture predominantly relies on centralized models that gather raw data into the cloud and deliver "universal answers (manuals)" to farmers. However, this model eliminates the inherent complexity of local farmlands, deprives farmers of their autonomy, and leads to the "enclosure of knowledge" by platform capitalism.
+### Toitoi as "Librarian" and "Mycelium"
+
+Toitoi does not treat AI as an authority that delivers universal agricultural answers.
+
+Instead, the AI inside Toitoi behaves more like:
+
+- a librarian connecting contexts and inquiries
+- a mycelial network linking distributed observations underground
+
+Rather than replacing farmers' judgment, Toitoi aims to amplify human observation and ecological curiosity.
+
+The system is designed not as a centralized optimization platform, but as a living public library of unresolved ecological questions.
+
+Modern smart agriculture predominantly relies on centralized models that gather raw data into the cloud and deliver "universal prescriptions" to farmers. However, this model eliminates the inherent complexity of local farmlands, deprives farmers of their autonomy, and leads to the "enclosure of knowledge" by platform capitalism.
 
 Toitoi completely overturns this structure:
 
@@ -29,7 +42,7 @@ Toitoi completely overturns this structure:
 
 ## ⚙️ System Architecture
 
-Toitoi is a "nested commons" composed of 3 modules and 1 common protocol based on Nostr (a decentralized P2P protocol).
+Toitoi is a "nested commons" composed of 3 modules connected through a common protocol based on Nostr.
 
 * **[Edge Layer] Local AI**: Conceals raw data, generates "inquiries", cryptographically signs them, and publishes them.
 * **[Infrastructure Layer] Commons Relay**: A decentralized relay network that permanently archives only "inquiries".
@@ -86,7 +99,30 @@ Toitoi（トイトイ）は、『[テクノロジーを手放す農業論](./Tec
 
 ## 💡 プロジェクトの思想：なぜToitoiなのか？
 
-現代のスマート農業は、生データをクラウドに集め、農家に「普遍的な答え（マニュアル）」を下ろす中央集権的なモデルが主流です。しかし、このモデルは農地固有の複雑性を排除し、農家の自律を奪い、プラットフォーム資本による「知識の囲い込み」を生み出します。
+### Toitoi は「司書」もしくは「菌糸」である
+
+Toitoi は、AIを「普遍的な答えを与える権威」として扱いません。
+
+Toitoi のAIは：
+
+- 文脈と問いを接続する「司書」
+- 分散した観察知を地下で結びつける「菌糸」
+
+として振る舞います。
+
+Toitoi が目指すのは、農家の判断を置き換えることではなく、
+
+> 人間の観察力と探究心を増幅すること
+
+です。
+
+Toitoi は、中央集権的な農業最適化プラットフォームではなく、
+
+> 「未解決の生態学的問い」が循環する公共図書館
+
+として設計されています。
+
+現代のスマート農業は、生データをクラウドに集め、農家に「普遍的な処方箋」を下ろす中央集権的なモデルが主流です。しかし、このモデルは農地固有の複雑性を排除し、農家の自律を奪い、プラットフォーム資本による「知識の囲い込み」を生み出します。
 
 Toitoiは、この構造を根底から覆します。
 
@@ -99,7 +135,7 @@ Toitoiは、この構造を根底から覆します。
 
 ## ⚙️ システム・アーキテクチャ
 
-Toitoiは、Nostr（分散型SNSプロトコル）を基盤とした3つのモジュールと、1つの共通プロトコルで構成される「入れ子構造のコモンズ」です。
+Toitoiは、Nostrを基盤とした共通プロトコルによって接続される3つのモジュールから構成される「入れ子構造のコモンズ」です。
 
 * **[エッジ層] ローカルAI**: 生データを秘匿し、「問い」を生成・暗号署名して送信する。
 * **[インフラ層] コモンズ・リレー**: 「問い」だけを永続的にアーカイブする分散リレー網。
